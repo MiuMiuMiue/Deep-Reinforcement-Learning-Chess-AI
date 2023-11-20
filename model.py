@@ -5,7 +5,7 @@ from utils import *
 import numpy as np
 
 class resBlock(nn.Module):
-    def __init__(self, hidden_channel=256):
+    def __init__(self, hidden_channel=128):
         super(resBlock).__init__()
         self.conv1 = nn.Conv2d(in_channels=hidden_channel, out_channels=hidden_channel, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(in_channels=hidden_channel, out_channels=hidden_channel, kernel_size=3, padding=1)
@@ -14,8 +14,8 @@ class resBlock(nn.Module):
         self.batch_norm2 = nn.BatchNorm2d(hidden_channel)
     
     def forward(self, x):
-        z = self.batchNorm1(self.conv1(self.relu(x)))
-        z = self.batchNorm2(self.conv2(self.relu(z)))
+        z = self.batch_norm1(self.conv1(self.relu(x)))
+        z = self.batch_norm2(self.conv2(self.relu(z)))
 
         return x + z
 
@@ -48,31 +48,37 @@ class betaChessBlock(nn.Module):
 class betaChessAI(nn.Module):
     def __init__(self, 
                  depth=5, 
-                 hidden_size=512, 
-                 hidden_channel=128, 
-                 num_heads=12, 
+                 hidden_size=1024, 
+                 hidden_channel=256,
+                 num_heads=12,
                  window_size=2,
                  input_size=8, 
                  mlp_ratio=4.0):
         super(betaChessAI).__init__()
         self.pos_embed = nn.Parameter(torch.zeros(1, int((input_size / window_size) ** 2), hidden_size), requires_grad=False)
+        self.conv1 = nn.Conv2d(in_channels=13, out_channels=hidden_channel, kernel_size=3, padding=1)
         self.blocks = nn.ModuleList([
             betaChessBlock(hidden_size, hidden_channel, num_heads, window_size, mlp_ratio) for _ in range(depth)
         ])
-        approx_gelu = lambda: nn.GELU(approximate="tanh")
-        self.mlp = Mlp(in_features=hidden_size, hidden_features=int(mlp_ratio * hidden_size), out_features=1, act_layer=approx_gelu)
 
-    def encodeInput(x, side):
+        self.approx_gelu = nn.GELU(approximate="tanh")
+        self.conv2 = nn.Conv2d(in_channels=hidden_channel, out_channels=64, kernel_size=3, padding=1)
+        self.linear = nn.Linear(in_features=hidden_channel * 64, out_features=5, bias=True)
+
+    def forward(self, x, actions, side):
         B, _, _ = x.shape
-        boards = np.zeros((B, 13, 8, 8))
+
+        x = encodeBoard(x, side, B) # (B, 13, 8, 8)
+        x = self.conv1(x) # (B, hidden_channel, 8, 8)
+        mask1, mask2 = computeMask(actions) # (B, 64, 8, 8), (B, 5)
+
+        for block in self.blocks:
+            x = block(x, self.pos_embed) # (B, hidden_channel, 8, 8)
         
-        for batch in range(B):
-            for piece in range(1, 7):
-                boards[batch][piece - 1, :, :] = x[batch] == piece
+        x = rearrange(self.conv2(x)) # (B, 64, 8, 8)
+        special_actions = self.approx_gelu(self.linear(rearrange(x, "B C H W -> B (H W C)")))
 
-            for piece in range(1, 7):
-                boards[batch][piece + 5, :, :] = x[batch] == -1 * piece
+        x = x * mask1 # (B, 64, 8, 8)
+        special_actions = special_actions * mask2 # (B, 5)
 
-            boards[batch][12, :, :] = side[batch]
-
-        return boards
+        return decodeOutput(x, special_actions, B) # (B, 8 * 8 * 64 + 5)
