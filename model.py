@@ -64,6 +64,8 @@ class betaChessAI(nn.Module):
         self.approx_gelu = nn.GELU(approximate="tanh")
         self.conv2 = nn.Conv2d(in_channels=hidden_channel, out_channels=64, kernel_size=3, padding=1)
         self.linear = nn.Linear(in_features=hidden_channel * 64, out_features=5, bias=True)
+
+        self.initialize_weights()
     
     def initialize_weights(self):
         # Initialize (and freeze) pos_embed by sin-cos embedding:
