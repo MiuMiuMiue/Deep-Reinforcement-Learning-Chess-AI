@@ -1,12 +1,11 @@
 import torch
 import torch.nn as nn
 from timm.models.vision_transformer import PatchEmbed, Attention, Mlp
-from utils import *
 import numpy as np
 
 class resBlock(nn.Module):
     def __init__(self, hidden_channel=128):
-        super(resBlock).__init__()
+        super(resBlock, self).__init__()
         self.conv1 = nn.Conv2d(in_channels=hidden_channel, out_channels=hidden_channel, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(in_channels=hidden_channel, out_channels=hidden_channel, kernel_size=3, padding=1)
         self.relu = nn.ReLU()
@@ -26,6 +25,7 @@ class betaChessBlock(nn.Module):
                  num_heads, 
                  window_size, 
                  mlp_ratio=4.0):
+        super(betaChessBlock, self).__init__()
         self.resBlock = resBlock(hidden_channel=hidden_channel)
         self.attn = Attention(hidden_size, num_heads=num_heads, qkv_bias=True)
 
@@ -50,16 +50,16 @@ class betaChessAI(nn.Module):
                  depth=5, 
                  hidden_size=1024, 
                  hidden_channel=256,
-                 num_heads=12,
+                 num_heads=8,
                  window_size=2,
                  input_size=8, 
                  mlp_ratio=4.0):
-        super(betaChessAI).__init__()
-        self.pos_embed = nn.Parameter(torch.zeros(1, int((input_size / window_size) ** 2), hidden_size), requires_grad=False)
+        super(betaChessAI, self).__init__()
         self.conv1 = nn.Conv2d(in_channels=13, out_channels=hidden_channel, kernel_size=3, padding=1)
         self.blocks = nn.ModuleList([
             betaChessBlock(hidden_size, hidden_channel, num_heads, window_size, mlp_ratio) for _ in range(depth)
         ])
+        self.pos_embed = nn.Parameter(torch.zeros(1, int((input_size / window_size) ** 2), hidden_size), requires_grad=False)
 
         self.approx_gelu = nn.GELU(approximate="tanh")
         self.conv2 = nn.Conv2d(in_channels=hidden_channel, out_channels=64, kernel_size=3, padding=1)
@@ -75,8 +75,8 @@ class betaChessAI(nn.Module):
         for block in self.blocks:
             x = block(x, self.pos_embed) # (B, hidden_channel, 8, 8)
         
-        x = rearrange(self.conv2(x)) # (B, 64, 8, 8)
         special_actions = self.approx_gelu(self.linear(rearrange(x, "B C H W -> B (H W C)")))
+        x = self.conv2(x) # (B, 64, 8, 8)
 
         x = x * mask1 # (B, 64, 8, 8)
         special_actions = special_actions * mask2 # (B, 5)

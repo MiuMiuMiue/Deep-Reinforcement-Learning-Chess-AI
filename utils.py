@@ -40,7 +40,7 @@ def encodeBoard(x, side, B):
 
         boards[batch][12, :, :] = side[batch]
 
-    return torch.tensor(boards)
+    return torch.tensor(boards).float()
 
 def decodeOutput(x, y, B):
     assert x.shape == (B, 64, 8, 8)
@@ -53,8 +53,7 @@ def decodeOutput(x, y, B):
     all_actions = torch.cat((x, y), dim=1)
 
     all_actions = sm(all_actions)
-    all_actions = torch.argmax(all_actions, axis=1)
-
+    # all_actions = torch.argmax(all_actions, axis=1)
     return all_actions # (B, 64 * 8 * 8 + 5)
 
 actionDict = {"CASTLE_KING_SIDE_WHITE": 0, 
@@ -93,7 +92,6 @@ def computeMask(legal_actions):
             if ind in actionDict.keys():
                 mask2[i, actionDict[ind]] = 1
             else:
-                print(ind)
                 mask1[i, ind[0], ind[1], ind[2]] = 1
     
     return torch.tensor(mask1), torch.tensor(mask2)
