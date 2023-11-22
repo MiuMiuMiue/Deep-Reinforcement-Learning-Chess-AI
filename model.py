@@ -65,6 +65,13 @@ class betaChessAI(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=hidden_channel, out_channels=64, kernel_size=3, padding=1)
         self.linear = nn.Linear(in_features=hidden_channel * 64, out_features=5, bias=True)
 
+        self.initialize_weights()
+    
+    def initialize_weights(self):
+        # Initialize (and freeze) pos_embed by sin-cos embedding:
+        pos_embed = get_2d_sincos_pos_embed(self.pos_embed.shape[-1], int(self.x_embedder.num_patches ** 0.5))
+        self.pos_embed.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
+
     def forward(self, x, actions, side):
         B, _, _ = x.shape
 
