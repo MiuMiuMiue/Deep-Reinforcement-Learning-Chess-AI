@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from timm.models.vision_transformer import PatchEmbed, Attention, Mlp
+from utils import *
 import numpy as np
 
 class resBlock(nn.Module):
