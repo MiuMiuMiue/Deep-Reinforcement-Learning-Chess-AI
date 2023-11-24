@@ -90,3 +90,14 @@ class betaChessAI(nn.Module):
         special_actions = special_actions * mask2 # (B, 5)
 
         return decodeOutput(x, special_actions, B) # (B, 8 * 8 * 64 + 5)
+
+class valueNet(nn.Module):
+    def __init__(self, hidden_size=1024, channel_size=13):
+        super(valueNet, self).__init__()
+        approx_gelu = lambda: nn.GELU(approximate="tanh")
+        self.mlp = Mlp(in_features=channel_size * 64, hidden_features=hidden_size, out_features=1, act_layer=approx_gelu, drop=0.1)
+    
+    def forward(self, x, side):
+        B, _, _ = x.shape
+        x = encodeBoard(x, side, B) # (B, 13, 8, 8)
+        return self.mlp(rearrange(x, "B C H W -> B (H W C)"))
