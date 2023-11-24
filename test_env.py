@@ -1,23 +1,23 @@
-from env import ChessEnvV1
-import random
-import torch.nn as nn
-import numpy as np
-import torch
+# from env import ChessEnvV1
+# import random
+# import torch.nn as nn
+# import numpy as np
+# import torch
 
-env = ChessEnvV1(log=False)
+# env = ChessEnvV1(log=False)
 
-done = False
+# done = False
 
-while not done:
-    state = env.state
+# while not done:
+#     state = env.state
 
-    # or select an action directly
-    actions = env.possible_actions
-    action = random.choice(actions)
-    new_state, reward, done, info = env.step(action)
-    print(new_state)
-    print(actions)
-    break
+#     # or select an action directly
+#     actions = env.possible_actions
+#     action = random.choice(actions)
+#     new_state, reward, done, info = env.step(action)
+#     print(new_state)
+#     print(actions)
+#     break
 
 # batch_size = 2
 # # matrix = np.random.random((batch_size, 69, 8, 8)) # example data

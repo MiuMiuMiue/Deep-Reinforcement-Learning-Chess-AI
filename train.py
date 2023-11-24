@@ -4,7 +4,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from utils import *
 import argparse
+from copy import deepcopy
+import random
 
 parser = argparse.ArgumentParser()
 
@@ -14,10 +17,12 @@ parser.add_argument("--gamma", type=float, default=0.99)
 parser.add_argument("--epochs", type=int, default=10)
 parser.add_argument("--clip-eps", type=float, default=0.2)
 parser.add_argument("--batch-size", type=int, default=64)
+parser.add_argument("--resume-point", type=int, default=1)
 
 args = parser.parse_args()
 chessModel = betaChessAI()
 
+device = 0
 LR = 1e-4
 GAMMA = 0.99
 EPOCHS = 10
@@ -28,6 +33,10 @@ env = ChessEnvV1()
 
 chessModel = betaChessAI()
 valueModel = valueNet()
+ema_teacher = deepcopy(chessModel).to(device)
+update_ema(ema_teacher, chessModel.module, decay=0) # initialize with the same weights
+players = (chessModel, ema_teacher)
+
 policy_optim = optim.Adam(chessModel.parameters(), lr=LR)
 value_optim = optim.Adam(valueModel.parameters(), lr=LR)
 loss = nn.MSELoss()
@@ -49,16 +58,25 @@ def PPO_step():
     
     chessModel.eval()
     valueModel.eval()
+
+    side = 0
+    player = random.choice([0, 1])
     while not done:
-        action_probs = chessModel(state)
+        actions = env.possible_actions
+
+        action_probs = players[player](state, actions, side)
         action = torch.multinomial(action_probs, 1).item()
         next_state, reward, done, _ = env.step(action)
+        
         states.append(state)
         actions.append(action)
         log_probs_old.append(torch.log(action_probs[0, action])) ## why
         rewards.append(reward)
 
         state = next_state
+        side = 1 - side
+        player = 1 - player
+
     returns = compute_returns(rewards)
     values = valueModel(torch.stack(states))
     advantages = returns - values.squeeze()
@@ -91,5 +109,7 @@ def PPO_step():
             value_loss.backward()
             value_optim.step()
 
-for _ in range(1000):
+for i in range(args.resume_point, 1001):
+    if i % 10 == 0:
+        save_ckpt(chessModel, valueModel, policy_optim, value_optim, args.result_dir, i)
     PPO_step()

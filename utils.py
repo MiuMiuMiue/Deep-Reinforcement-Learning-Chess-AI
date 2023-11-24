@@ -2,6 +2,8 @@ from einops import rearrange
 import numpy as np
 import torch
 import torch.nn as nn
+import os
+from collections import OrderedDict
 
 def window_partition(x, window_size):
     # This is the Patchify function that can divide the image into smaller patch
@@ -144,3 +146,29 @@ def get_1d_sincos_pos_embed_from_grid(embed_dim, pos):
 
     emb = np.concatenate([emb_sin, emb_cos], axis=1)  # (M, D)
     return emb
+
+@torch.no_grad()
+def update_ema(ema_model, model, decay=0.9999):
+    """
+    Step the EMA model towards the current model.
+    """
+    ema_params = OrderedDict(ema_model.named_parameters())
+    model_params = OrderedDict(model.named_parameters())
+
+    for name, param in model_params.items():
+        # TODO: Consider applying only to params that require_grad to avoid small numerical changes of pos_embed
+        ema_params[name].mul_(decay).add_(param.data, alpha=1 - decay)
+
+def save_ckpt(policyModel, valueModel, policyOptim, valueOptim, dir, step):
+    checkpoint = {
+        "policyModel": policyModel.module.state_dict(), 
+        "valueModel": valueModel.module.state_dict(), 
+        "policyOptim": policyOptim.state_dict(), 
+        "valueOptim": valueOptim.state_dict()
+        }
+    ckpt_path = os.path.join(dir, f"{step:07d}.pt")
+    torch.save(checkpoint, ckpt_path)
+    print(f"checkpoint saved to {ckpt_path}")
+
+def resume_from_ckpt():
+    passs
