@@ -170,5 +170,19 @@ def save_ckpt(policyModel, valueModel, policyOptim, valueOptim, dir, step):
     torch.save(checkpoint, ckpt_path)
     print(f"checkpoint saved to {ckpt_path}")
 
-def resume_from_ckpt():
-    passs
+def resume_from_ckpt(policyModel, valueModel, policyOptim, valueOptim, ckptPath):
+    assert os.path.isfile(ckptPath), f"could not find model checkpoint at {ckptPath}"
+
+    checkpoints = torch.load(ckptPath, map_location=lambda storage, loc: storage)
+    policy_model = checkpoints["policyModel"]
+    value_model = checkpoints["valueModel"]
+    policy_optim = checkpoints["policyOptim"]
+    value_optim = checkpoints["valueOptim"]
+
+    policyModel.load_state_dict(policy_model, strict=True)
+    valueModel.load_state_dict(value_model, strict=True)
+    policyOptim.load_state_dict(policy_optim)
+    valueOptim.load_state_dict(value_optim)
+
+    return policyModel, valueModel, policyOptim, valueOptim
+    

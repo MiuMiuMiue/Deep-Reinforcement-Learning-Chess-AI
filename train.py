@@ -18,27 +18,34 @@ parser.add_argument("--epochs", type=int, default=10)
 parser.add_argument("--clip-eps", type=float, default=0.2)
 parser.add_argument("--batch-size", type=int, default=64)
 parser.add_argument("--resume-point", type=int, default=1)
+parser.add_argument("--ckpt", type=str, default="")
 
 args = parser.parse_args()
 chessModel = betaChessAI()
 
 device = 0
-LR = 1e-4
-GAMMA = 0.99
-EPOCHS = 10
-CLIP_EPS = 0.2
-BATCH_SIZE = 64
+LR = parser.learning_rate
+GAMMA = parser.gamma
+EPOCHS = parser.epochs
+CLIP_EPS = parser.clip_eps
+BATCH_SIZE = parser.batch_size
 
 env = ChessEnvV1()
 
 chessModel = betaChessAI()
 valueModel = valueNet()
-ema_teacher = deepcopy(chessModel).to(device)
-update_ema(ema_teacher, chessModel.module, decay=0) # initialize with the same weights
-players = (chessModel, ema_teacher)
-
 policy_optim = optim.Adam(chessModel.parameters(), lr=LR)
 value_optim = optim.Adam(valueModel.parameters(), lr=LR)
+
+if parser.ckpt:
+    chessModel, valueModel, policy_optim, value_optim = resume_from_ckpt(chessModel, valueModel, policy_optim, value_optim, parser.ckpt)
+    ema_teacher = deepcopy(chessModel).to(device)
+    update_ema(ema_teacher, chessModel.module)
+else:
+    ema_teacher = deepcopy(chessModel).to(device)
+    update_ema(ema_teacher, chessModel.module, decay=0)
+
+players = (chessModel, ema_teacher)
 loss = nn.MSELoss()
 
 def compute_returns(rewards):
@@ -110,6 +117,6 @@ def PPO_step():
             value_optim.step()
 
 for i in range(args.resume_point, 1001):
+    PPO_step()
     if i % 10 == 0:
         save_ckpt(chessModel, valueModel, policy_optim, value_optim, args.result_dir, i)
-    PPO_step()
