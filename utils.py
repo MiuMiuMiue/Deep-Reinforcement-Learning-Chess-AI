@@ -61,6 +61,7 @@ def decodeOutput(x, y, B, mask):
 
 def computeMask(legal_actions):
     B, _ = legal_actions.shape
+    legal_actions = legal_actions.cpu().numpy()
     mask = np.zeros((B, 4101))
 
     for i in range(B):
