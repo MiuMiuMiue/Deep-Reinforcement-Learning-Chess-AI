@@ -29,8 +29,9 @@ GAMMA = args.gamma
 EPOCHS = args.epochs
 CLIP_EPS = args.clip_eps
 BATCH_SIZE = args.batch_size
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-env = ChessEnvV1()
+env = ChessEnvV1(log=False)
 
 chessModel = betaChessAI()
 valueModel = valueNet()
@@ -47,7 +48,11 @@ else:
     chessModel = chessModel.to(device)
     update_ema(ema_teacher, chessModel, decay=0)
 
+student = deepcopy(chessModel)
+requires_grad(student, False)
 requires_grad(ema_teacher, False)
+student.eval()
+ema_teacher.eval()
 loss = nn.MSELoss()
 
 def compute_returns(rewards):
@@ -61,52 +66,62 @@ def compute_returns(rewards):
     return torch.tensor(returns)
 
 def PPO_step():
-    chessModel.eval()
-    valueModel.eval()
+    with torch.no_grad():
+        side = random.choice((0, 1))
+        state = env.reset(player_color="WHITE", opponent=ema_teacher) if side == 0 else env.reset(player_color="BLACK", opponent=ema_teacher)
+        done = False
+        states, actions, log_probs_old, rewards = [], [], [], []
+        sides, all_legal_actions = [], []
 
-    side = random.choice((0, 1))
-    state = env.reset(player_color="WHITE", opponent=ema_teacher) if side == 0 else env.reset(player_color="BLACK", opponent=ema_teacher)
-    done = False
-    states, actions, log_probs_old, rewards = [], [], [], []
-
-    while not done:
-        actions = env.possible_actions
-        action_probs = chessModel(state, actions, side)
-        action = torch.multinomial(action_probs, 1).item()
-        while action not in actions:
+        while not done:
+            legal_actions = env.possible_actions
+            action_probs = student(torch.tensor([state]).to(device), torch.tensor([legal_actions]).to(device), torch.tensor([side]).to(device))
             action = torch.multinomial(action_probs, 1).item()
-        next_state, reward, done, _ = env.step(action)
-        
-        states.append(state)
-        actions.append(action)
-        log_probs_old.append(torch.log(action_probs[0, action]))
-        rewards.append(reward)
+            while action not in legal_actions:
+                action = torch.multinomial(action_probs, 1).item()
+            next_state, reward, done, _ = env.step(action)
+            
+            states.append(torch.tensor(state))
+            actions.append(action)
+            log_probs_old.append(torch.log(action_probs[0, action]))
+            rewards.append(reward)
 
-        state = next_state
+            sides.append(torch.tensor(side))
+            legal_actions = torch.tensor(legal_actions)
+            all_legal_actions.append(nn.functional.pad(legal_actions, (0, 50 - len(legal_actions)), value=-1))
+
+            state = next_state
 
     returns = compute_returns(rewards)
-    values = valueModel(torch.stack(states))
+    values = valueModel(torch.stack(states).to(device), torch.stack(sides).to(device))
     advantages = returns - values.squeeze()
 
-    chessModel.train()
-    valueModel.train()
     for _ in range(EPOCHS):
         for i in range(0, len(states), BATCH_SIZE):
-            batch_states = torch.stack(states[i:i+BATCH_SIZE])
-            batch_actions = torch.tensor(actions[i:i+BATCH_SIZE])
-            batch_log_probs_old = torch.stack(log_probs_old[i:i+BATCH_SIZE])
-            batch_advantages = advantages[i:i+BATCH_SIZE]
-            batch_returns = returns[i:i+BATCH_SIZE]
+            print("===")
+            batch_states = torch.stack(states[i:i+BATCH_SIZE]).to(device)
+            batch_actions = torch.tensor(actions[i:i+BATCH_SIZE]).to(device)
+            batch_log_probs_old = torch.stack(log_probs_old[i:i+BATCH_SIZE]).to(device)
+            batch_advantages = advantages[i:i+BATCH_SIZE].to(device)
+            batch_returns = returns[i:i+BATCH_SIZE].to(device)
+            batch_sides = torch.tensor(sides[i:i+BATCH_SIZE]).to(device)
+            batch_legal_actions = torch.stack(all_legal_actions[i:i+BATCH_SIZE]).to(device)
 
-            new_action_probs = chessModel(batch_states)
-            new_log_probs = torch.log(new_action_probs.gather(1, batch_actions.unsqueeze(-1)))
+            print(f"batch_states: {batch_states.shape}, batch_legal_actions: {batch_legal_actions.shape}, batch_sides: {batch_sides.shape}")
+            new_action_probs = chessModel(batch_states, batch_legal_actions, batch_sides)
+            print(f"new_action_probs: {new_action_probs.shape}")
+            new_log_probs = torch.log(new_action_probs.gather(1, batch_actions.unsqueeze(-1))).squeeze(1)
+            print(f"new_log_probs: {new_log_probs.shape}")
+            print(f"batch_log_probs_old: {batch_log_probs_old.shape}")
             ratio = (new_log_probs - batch_log_probs_old).exp()
+            print(f"ratio: {ratio.shape}")
+            print(f"batch_advantages: {batch_advantages.shape}")
 
-            surrogate_obj1 = ratio * batch_advantages
-            surrogate_obj2 = torch.clamp(ratio, 1-CLIP_EPS, 1+CLIP_EPS) * batch_advantages
+            surrogate_obj1 = ratio * batch_advantages.detach()
+            surrogate_obj2 = torch.clamp(ratio, 1-CLIP_EPS, 1+CLIP_EPS) * batch_advantages.detach()
             policy_loss = -torch.min(surrogate_obj1, surrogate_obj2).mean()
 
-            value_loss = loss(valueModel(batch_states), batch_returns.unsqueeze(-1))
+            value_loss = loss(valueModel(batch_states, batch_sides), batch_returns.unsqueeze(-1))
 
             policy_optim.zero_grad()
             policy_loss.backward()
@@ -117,11 +132,20 @@ def PPO_step():
             value_optim.step()
 
 for i in range(args.resume_point, 1001):
+    print("++++")
     PPO_step()
     if i % 10 == 0:
         save_ckpt(chessModel, valueModel, policy_optim, value_optim, args.result_dir, i)
     if i % 5 == 0:
-        switch = switchTeacher(chessModel, ema_teacher)
+        switch = switchTeacherStudent(chessModel, ema_teacher)
         if switch:
+            student = deepcopy(chessModel)
             ema_teacher = update_ema(ema_teacher, chessModel)
             requires_grad(ema_teacher, False)
+            requires_grad(student, False)
+            student.eval()
+            ema_teacher.eval()
+    if i == 2:
+        break
+
+print("done")

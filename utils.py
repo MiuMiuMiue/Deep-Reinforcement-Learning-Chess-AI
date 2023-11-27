@@ -62,7 +62,7 @@ def computeMask(legal_actions):
     mask = np.zeros((B, 4101))
 
     for i in range(B):
-        mask[i, legal_actions[i]] = 1
+        mask[i, legal_actions[i][legal_actions[i] != -1]] = 1
 
     return torch.tensor(mask)
 
@@ -184,27 +184,27 @@ def requires_grad(model, flag=True):
     for p in model.parameters():
         p.requires_grad = flag
 
-def switchTeacher(student, teacher):
+def switchTeacherStudent(student, teacher):
     game_env = ChessEnvV1()
+    with torch.no_grad():
+        count = 0
+        for _ in range(10):
+            side = random.choice((0, 1))
+            state = game_env.reset(player_color="WHITE", opponent=teacher) if side == 0 else game_env.reset(player_color="BLACK", opponent=teacher)
+            done = False
+            while not done:
+                actions = game_env.possible_actions
 
-    count = 0
-    for _ in range(10):
-        side = random.choice((0, 1))
-        state = game_env.reset(player_color="WHITE", opponent=teacher) if side == 0 else game_env.reset(player_color="BLACK", opponent=teacher)
-        done = False
-        while not done:
-            actions = game_env.possible_actions
-
-            action_probs = student(torch.tensor([state]), torch.tensor([actions]), torch.tensor([side]))[0]
-            action = torch.multinomial(action_probs, 1).item()
-            while action not in actions:
+                action_probs = student(torch.tensor([state]), torch.tensor([actions]), torch.tensor([side]))[0]
                 action = torch.multinomial(action_probs, 1).item()
-            new_state, reward, done, info = game_env.step(action)
+                while action not in actions:
+                    action = torch.multinomial(action_probs, 1).item()
+                new_state, reward, done, info = game_env.step(action)
 
-            state = new_state
-        
-        if reward > 0:
-            count += 1
+                state = new_state
+            
+            if reward > 0:
+                count += 1
     
     return count > 5
 
