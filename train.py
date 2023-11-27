@@ -9,6 +9,7 @@ import argparse
 from copy import deepcopy
 import random
 from tqdm import tqdm
+import time
 
 parser = argparse.ArgumentParser()
 
@@ -131,7 +132,8 @@ def PPO_step():
             value_optim.step()
 
 print("start training ...")
-for i in tqdm(range(args.resume_point, 1001)):
+for i in range(args.resume_point, 1001):
+    start = time.time()
     print(f"Episodes: {i}")
     PPO_step()
     if i % 10 == 0:
@@ -148,7 +150,6 @@ for i in tqdm(range(args.resume_point, 1001)):
             ema_teacher.eval()
             print("\tWin!!! Update Teacher Model.")
         print("\tNot that Good")
-    if i == 2:
-        break
+    print(f"Finish episodes {i}. Using {time.time() - start:.2f} minutes")
 
 print("Finish Training")
