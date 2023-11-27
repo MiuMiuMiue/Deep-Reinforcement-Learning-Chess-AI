@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import os
 from collections import OrderedDict
+import random
+from env import ChessEnvV1
 
 def window_partition(x, window_size):
     # This is the Patchify function that can divide the image into smaller patch
@@ -44,59 +46,25 @@ def encodeBoard(x, side, B):
 
     return torch.tensor(boards).float()
 
-def decodeOutput(x, y, B):
-    assert x.shape == (B, 64, 8, 8)
+def decodeOutput(x, y, B, mask):
+    assert x.shape == (B, 64 * 8 * 8)
     assert y.shape == (B, 5)
 
-    x = x
     sm = nn.Softmax(dim=1)
 
-    x = rearrange(x, "B C H W -> B (H W C)")
-    all_actions = torch.cat((x, y), dim=1)
-
+    all_actions = torch.cat((x, y), dim=1) * mask
     all_actions = sm(all_actions)
-    # all_actions = torch.argmax(all_actions, axis=1)
+
     return all_actions # (B, 64 * 8 * 8 + 5)
-
-actionDict = {"CASTLE_KING_SIDE_WHITE": 0, 
-              "CASTLE_QUEEN_SIDE_WHITE": 1, 
-              "CASTLE_KING_SIDE_BLACK": 2, 
-              "CASTLE_QUEEN_SIDE_BLACK": 3, 
-              "RESIGN": 4}
-
-def action_to_move(action):
-    if action >= 64 * 64:
-        _action = action - 64 * 64
-        if _action == 0:
-            return "CASTLE_KING_SIDE_WHITE"
-        elif _action == 1:
-            return "CASTLE_QUEEN_SIDE_WHITE"
-        elif _action == 2:
-            return "CASTLE_KING_SIDE_BLACK"
-        elif _action == 3:
-            return "CASTLE_QUEEN_SIDE_BLACK"
-        elif _action == 4:
-            return "RESIGN"
-
-    _from, _to = action // 64, action % 64
-    x0, y0 = _from // 8, _from % 8
-    x1, y1 = _to // 8, _to % 8
-    return x1 * 8 + y1, x0, y0
 
 def computeMask(legal_actions):
     B, _ = legal_actions.shape
-    mask1 = np.zeros((B, 64, 8, 8))
-    mask2 = np.zeros((B, 5))
+    mask = np.zeros((B, 4101))
 
     for i in range(B):
-        for action in legal_actions[i]:
-            ind = action_to_move(action)
-            if ind in actionDict.keys():
-                mask2[i, actionDict[ind]] = 1
-            else:
-                mask1[i, ind[0], ind[1], ind[2]] = 1
-    
-    return torch.tensor(mask1), torch.tensor(mask2)
+        mask[i, legal_actions[i]] = 1
+
+    return torch.tensor(mask)
 
 def get_2d_sincos_pos_embed(embed_dim, grid_size, cls_token=False, extra_tokens=0):
     """
@@ -185,4 +153,59 @@ def resume_from_ckpt(policyModel, valueModel, policyOptim, valueOptim, ckptPath)
     valueOptim.load_state_dict(value_optim)
 
     return policyModel, valueModel, policyOptim, valueOptim
+
+def switchTeacher(student, teacher):
+    game_env = ChessEnvV1(opponent=teacher, log=False)
+    student.eval()
+    count = 0
+
+    for _ in range(10):
+        side = random.choice((0, 1))
+        state = game_env.reset(player_color="WHITE", opponent=teacher) if side == 0 else game_env.reset(player_color="BLACK", opponent=teacher)
+        done = False
+        
+        while not done:
+            actions = game_env.possible_actions
+            action_probs = student(state, actions, side)
+            action = torch.multinomial(action_probs, 1).item()
+            next_state, reward, done, _ = game_env.step(action)
+
+            state = next_state
+        
+        if reward > 0:
+            count += 1
+    
+    return count > 5
+
+def requires_grad(model, flag=True):
+    """
+    Set requires_grad flag for all parameters in a model.
+    """
+    for p in model.parameters():
+        p.requires_grad = flag
+
+def switchTeacher(student, teacher):
+    game_env = ChessEnvV1()
+
+    count = 0
+    for _ in range(10):
+        side = random.choice((0, 1))
+        state = game_env.reset(player_color="WHITE", opponent=teacher) if side == 0 else game_env.reset(player_color="BLACK", opponent=teacher)
+        done = False
+        while not done:
+            actions = game_env.possible_actions
+
+            action_probs = student(torch.tensor([state]), torch.tensor([actions]), torch.tensor([side]))[0]
+            action = torch.multinomial(action_probs, 1).item()
+            while action not in actions:
+                action = torch.multinomial(action_probs, 1).item()
+            new_state, reward, done, info = game_env.step(action)
+
+            state = new_state
+        
+        if reward > 0:
+            count += 1
+    
+    return count > 5
+
     

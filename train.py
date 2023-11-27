@@ -24,11 +24,11 @@ args = parser.parse_args()
 chessModel = betaChessAI()
 
 device = 0
-LR = parser.learning_rate
-GAMMA = parser.gamma
-EPOCHS = parser.epochs
-CLIP_EPS = parser.clip_eps
-BATCH_SIZE = parser.batch_size
+LR = args.learning_rate
+GAMMA = args.gamma
+EPOCHS = args.epochs
+CLIP_EPS = args.clip_eps
+BATCH_SIZE = args.batch_size
 
 env = ChessEnvV1()
 
@@ -37,15 +37,17 @@ valueModel = valueNet()
 policy_optim = optim.Adam(chessModel.parameters(), lr=LR)
 value_optim = optim.Adam(valueModel.parameters(), lr=LR)
 
-if parser.ckpt:
-    chessModel, valueModel, policy_optim, value_optim = resume_from_ckpt(chessModel, valueModel, policy_optim, value_optim, parser.ckpt)
+if args.ckpt:
+    chessModel, valueModel, policy_optim, value_optim = resume_from_ckpt(chessModel, valueModel, policy_optim, value_optim, args.ckpt)
     ema_teacher = deepcopy(chessModel).to(device)
-    update_ema(ema_teacher, chessModel.module)
+    chessModel = chessModel.to(device)
+    update_ema(ema_teacher, chessModel)
 else:
     ema_teacher = deepcopy(chessModel).to(device)
-    update_ema(ema_teacher, chessModel.module, decay=0)
+    chessModel = chessModel.to(device)
+    update_ema(ema_teacher, chessModel, decay=0)
 
-players = (chessModel, ema_teacher)
+requires_grad(ema_teacher, False)
 loss = nn.MSELoss()
 
 def compute_returns(rewards):
@@ -59,30 +61,28 @@ def compute_returns(rewards):
     return torch.tensor(returns)
 
 def PPO_step():
-    state = env.reset()
-    done = False
-    states, actions, log_probs_old, rewards = [], [], [], []
-    
     chessModel.eval()
     valueModel.eval()
 
-    side = 0
-    player = random.choice([0, 1])
+    side = random.choice((0, 1))
+    state = env.reset(player_color="WHITE", opponent=ema_teacher) if side == 0 else env.reset(player_color="BLACK", opponent=ema_teacher)
+    done = False
+    states, actions, log_probs_old, rewards = [], [], [], []
+
     while not done:
         actions = env.possible_actions
-
-        action_probs = players[player](state, actions, side)
+        action_probs = chessModel(state, actions, side)
         action = torch.multinomial(action_probs, 1).item()
+        while action not in actions:
+            action = torch.multinomial(action_probs, 1).item()
         next_state, reward, done, _ = env.step(action)
         
         states.append(state)
         actions.append(action)
-        log_probs_old.append(torch.log(action_probs[0, action])) ## why
+        log_probs_old.append(torch.log(action_probs[0, action]))
         rewards.append(reward)
 
         state = next_state
-        side = 1 - side
-        player = 1 - player
 
     returns = compute_returns(rewards)
     values = valueModel(torch.stack(states))
@@ -120,3 +120,8 @@ for i in range(args.resume_point, 1001):
     PPO_step()
     if i % 10 == 0:
         save_ckpt(chessModel, valueModel, policy_optim, value_optim, args.result_dir, i)
+    if i % 5 == 0:
+        switch = switchTeacher(chessModel, ema_teacher)
+        if switch:
+            ema_teacher = update_ema(ema_teacher, chessModel)
+            requires_grad(ema_teacher, False)

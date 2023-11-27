@@ -56,6 +56,8 @@ class betaChessAI(nn.Module):
                  input_size=8, 
                  mlp_ratio=4.0):
         super(betaChessAI, self).__init__()
+        self.num_patches = (input_size // window_size) ** 2
+
         self.conv1 = nn.Conv2d(in_channels=13, out_channels=hidden_channel, kernel_size=3, padding=1)
         self.blocks = nn.ModuleList([
             betaChessBlock(hidden_size, hidden_channel, num_heads, window_size, mlp_ratio) for _ in range(depth)
@@ -63,14 +65,14 @@ class betaChessAI(nn.Module):
         self.pos_embed = nn.Parameter(torch.zeros(1, int((input_size / window_size) ** 2), hidden_size), requires_grad=False)
 
         self.approx_gelu = nn.GELU(approximate="tanh")
-        self.conv2 = nn.Conv2d(in_channels=hidden_channel, out_channels=64, kernel_size=3, padding=1)
-        self.linear = nn.Linear(in_features=hidden_channel * 64, out_features=5, bias=True)
+        self.linear1 = nn.Linear(in_features=hidden_channel * 64, out_features=64 * 64, bias=True)
+        self.linear2 = nn.Linear(in_features=hidden_channel * 64, out_features=5, bias=True)
 
         self.initialize_weights()
     
     def initialize_weights(self):
         # Initialize (and freeze) pos_embed by sin-cos embedding:
-        pos_embed = get_2d_sincos_pos_embed(self.pos_embed.shape[-1], int(self.x_embedder.num_patches ** 0.5))
+        pos_embed = get_2d_sincos_pos_embed(self.pos_embed.shape[-1], int(self.num_patches ** 0.5))
         self.pos_embed.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
 
     def forward(self, x, actions, side):
@@ -78,18 +80,15 @@ class betaChessAI(nn.Module):
 
         x = encodeBoard(x, side, B) # (B, 13, 8, 8)
         x = self.conv1(x) # (B, hidden_channel, 8, 8)
-        mask1, mask2 = computeMask(actions) # (B, 64, 8, 8), (B, 5)
+        mask = computeMask(actions) # (B, 64 * 64 + 5)
 
         for block in self.blocks:
             x = block(x, self.pos_embed) # (B, hidden_channel, 8, 8)
         
-        special_actions = self.approx_gelu(self.linear(rearrange(x, "B C H W -> B (H W C)")))
-        x = self.conv2(x) # (B, 64, 8, 8)
+        special_actions = self.approx_gelu(self.linear2(rearrange(x, "B C H W -> B (H W C)")))
+        x = self.approx_gelu(self.linear1(rearrange(x, "B C H W -> B (H W C)")))
 
-        x = x * mask1 # (B, 64, 8, 8)
-        special_actions = special_actions * mask2 # (B, 5)
-
-        return decodeOutput(x, special_actions, B) # (B, 8 * 8 * 64 + 5)
+        return decodeOutput(x, special_actions, B, mask) # (B, 8 * 8 * 64 + 5)
 
 class valueNet(nn.Module):
     def __init__(self, hidden_size=1024, channel_size=13):
