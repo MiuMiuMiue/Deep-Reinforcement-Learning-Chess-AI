@@ -57,6 +57,7 @@ class betaChessAI(nn.Module):
                  mlp_ratio=4.0, 
                  device=None):
         super(betaChessAI, self).__init__()
+        self.device = device
         self.num_patches = (input_size // window_size) ** 2
 
         self.conv1 = nn.Conv2d(in_channels=13, out_channels=hidden_channel, kernel_size=3, padding=1)
