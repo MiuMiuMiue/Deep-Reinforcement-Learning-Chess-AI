@@ -141,11 +141,13 @@ class ChessEnvV1(gym.Env):
         opponent="random", # give my own model
         log=True,
         initial_state=DEFAULT_BOARD,
+        device=None
     ):
         # constants
         self.moves_max = 149
         self.log = log
         self.initial_state = initial_state
+        self.device = device
 
         #
         # Observation + Action spaces
@@ -207,7 +209,7 @@ class ChessEnvV1(gym.Env):
         self.possible_moves = self.get_possible_moves(state=self.state, player=WHITE)
         # If player chooses black, make white openent move first
         if self.player == BLACK:
-            action_probs = self.opponent_policy(torch.tensor([self.state]), torch.tensor([self.possible_actions]), torch.tensor([0]))[0]
+            action_probs = self.opponent_policy(torch.tensor([self.state]).to(self.device), torch.tensor([self.possible_actions]).to(self.device), torch.tensor([0]).to(self.device))[0]
             white_first_action = torch.multinomial(action_probs, 1).item() ## since it will be my own model
             while white_first_action not in self.possible_actions:
                 white_first_action = torch.multinomial(action_probs, 1).item()
@@ -281,7 +283,7 @@ class ChessEnvV1(gym.Env):
 
         # Bot Opponent play
         if self.opponent_policy:
-            action_probs = self.opponent_policy(torch.tensor([self.state]), torch.tensor([self.possible_actions]), torch.tensor([0]))[0]
+            action_probs = self.opponent_policy(torch.tensor([self.state]).to(self.device), torch.tensor([self.possible_actions]).to(self.device), torch.tensor([0]).to(self.device))[0]
             opponent_action = torch.multinomial(action_probs, 1).item() ## since it will be my own model
             while opponent_action not in self.possible_actions:
                 opponent_action = torch.multinomial(action_probs, 1).item()

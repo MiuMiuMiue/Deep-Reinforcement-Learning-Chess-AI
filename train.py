@@ -31,7 +31,7 @@ CLIP_EPS = args.clip_eps
 BATCH_SIZE = args.batch_size
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-env = ChessEnvV1(log=False)
+env = ChessEnvV1(log=False, device=device)
 
 chessModel = betaChessAI().to(device)
 valueModel = valueNet().to(device)
@@ -136,7 +136,7 @@ for i in tqdm(range(args.resume_point, 1001)):
     if i % 10 == 0:
         save_ckpt(chessModel, valueModel, policy_optim, value_optim, args.result_dir, i)
     if i % 5 == 0:
-        switch = switchTeacherStudent(chessModel, ema_teacher)
+        switch = switchTeacherStudent(chessModel, ema_teacher, device)
         if switch:
             student = deepcopy(chessModel)
             ema_teacher = update_ema(ema_teacher, chessModel)

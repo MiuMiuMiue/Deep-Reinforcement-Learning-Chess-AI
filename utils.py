@@ -154,8 +154,8 @@ def resume_from_ckpt(policyModel, valueModel, policyOptim, valueOptim, ckptPath)
 
     return policyModel, valueModel, policyOptim, valueOptim
 
-def switchTeacher(student, teacher):
-    game_env = ChessEnvV1(opponent=teacher, log=False)
+def switchTeacher(student, teacher, device):
+    game_env = ChessEnvV1(opponent=teacher, log=False, device=device)
     student.eval()
     count = 0
 
