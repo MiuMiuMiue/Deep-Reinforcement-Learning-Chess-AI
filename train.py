@@ -70,12 +70,12 @@ def PPO_step():
         sides, all_legal_actions = [], []
         for _ in range(5):
             side = random.choice((0, 1))
-            # print(side)
             state = env.reset(player_color="WHITE", opponent=ema_teacher) if side == 0 else env.reset(player_color="BLACK", opponent=ema_teacher)
             done = False
             while not done:
                 legal_actions = env.possible_actions
                 if not legal_actions:
+                    print("===============================================")
                     done = True
                     break
                 action_probs = student(torch.tensor([state]).to(device), torch.tensor([legal_actions]).to(device), torch.tensor([side]).to(device))

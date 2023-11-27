@@ -68,6 +68,7 @@ def computeMask(legal_actions):
         try:
             mask[i, legal_actions[i][legal_actions[i] != -1]] = 1
         except:
+            print(legal_actions)
             print(legal_actions[i])
             print(legal_actions[i][legal_actions[i] != -1])
             raise ValueError()
