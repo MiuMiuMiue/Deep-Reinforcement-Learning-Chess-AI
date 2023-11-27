@@ -91,7 +91,7 @@ def PPO_step():
 
                 state = next_state
 
-    returns = compute_returns(rewards)
+    returns = compute_returns(rewards).to(device)
     values = valueModel(torch.stack(states).to(device), torch.stack(sides).to(device))
     advantages = returns - values.squeeze()
 
