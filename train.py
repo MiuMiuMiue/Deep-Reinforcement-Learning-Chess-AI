@@ -130,12 +130,14 @@ def PPO_step():
             value_loss.backward()
             value_optim.step()
 
+print("start training ...")
 for i in tqdm(range(args.resume_point, 1001)):
-    # print("++++")
+    print(f"Episodes: {i}")
     PPO_step()
     if i % 10 == 0:
         save_ckpt(chessModel, valueModel, policy_optim, value_optim, args.result_dir, i)
     if i % 5 == 0:
+        print("\tPlaying against teacher")
         switch = switchTeacherStudent(chessModel, ema_teacher, device)
         if switch:
             student = deepcopy(chessModel)
@@ -144,7 +146,8 @@ for i in tqdm(range(args.resume_point, 1001)):
             requires_grad(student, False)
             student.eval()
             ema_teacher.eval()
-            print("Update Teacher Model.")
+            print("\tWin!!! Update Teacher Model.")
+        print("\tNot that Good")
     if i == 2:
         break
 

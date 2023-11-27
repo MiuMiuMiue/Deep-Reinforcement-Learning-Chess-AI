@@ -139,7 +139,7 @@ def save_ckpt(policyModel, valueModel, policyOptim, valueOptim, dir, step):
         }
     ckpt_path = os.path.join(dir, f"{step:07d}.pt")
     torch.save(checkpoint, ckpt_path)
-    print(f"checkpoint saved to {ckpt_path}")
+    print(f"\tcheckpoint saved to {ckpt_path}")
 
 def resume_from_ckpt(policyModel, valueModel, policyOptim, valueOptim, ckptPath):
     assert os.path.isfile(ckptPath), f"could not find model checkpoint at {ckptPath}"

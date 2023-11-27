@@ -93,13 +93,44 @@ class betaChessAI(nn.Module):
         return decodeOutput(x, special_actions, B, mask).to(self.device) # (B, 8 * 8 * 64 + 5)
 
 class valueNet(nn.Module):
-    def __init__(self, hidden_size=1024, channel_size=13, device=None):
-        super(valueNet, self).__init__()
+    def __init__(self, 
+                 depth=5, 
+                 hidden_size=1024, 
+                 hidden_channel=256,
+                 num_heads=8,
+                 window_size=2,
+                 input_size=8, 
+                 mlp_ratio=4.0, 
+                 device=None):
+        super(betaChessAI, self).__init__()
         self.device = device
-        approx_gelu = lambda: nn.GELU(approximate="tanh")
-        self.mlp = Mlp(in_features=channel_size * 64, hidden_features=hidden_size, out_features=1, act_layer=approx_gelu, drop=0.1)
+        self.num_patches = (input_size // window_size) ** 2
+
+        self.conv1 = nn.Conv2d(in_channels=13, out_channels=hidden_channel, kernel_size=3, padding=1)
+        self.blocks = nn.ModuleList([
+            betaChessBlock(hidden_size, hidden_channel, num_heads, window_size, mlp_ratio) for _ in range(depth)
+        ])
+        self.pos_embed = nn.Parameter(torch.zeros(1, int((input_size / window_size) ** 2), hidden_size), requires_grad=False)
+
+        self.approx_gelu = nn.GELU(approximate="tanh")
+        self.linear1 = nn.Linear(in_features=hidden_channel * 64, out_features=1, bias=True)
+
+        self.initialize_weights()
     
-    def forward(self, x, side):
+    def initialize_weights(self):
+        # Initialize (and freeze) pos_embed by sin-cos embedding:
+        pos_embed = get_2d_sincos_pos_embed(self.pos_embed.shape[-1], int(self.num_patches ** 0.5))
+        self.pos_embed.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
+
+    def forward(self, x, actions, side):
         B, _, _ = x.shape
+
         x = encodeBoard(x, side, B).to(self.device) # (B, 13, 8, 8)
-        return self.mlp(rearrange(x, "B C H W -> B (H W C)"))
+        x = self.conv1(x) # (B, hidden_channel, 8, 8)
+
+        for block in self.blocks:
+            x = block(x, self.pos_embed) # (B, hidden_channel, 8, 8)
+    
+        x = self.linear1(rearrange(x, "B C H W -> B (H W C)"))
+
+        return x
