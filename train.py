@@ -8,6 +8,7 @@ from utils import *
 import argparse
 from copy import deepcopy
 import random
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 
@@ -132,7 +133,7 @@ def PPO_step():
             value_loss.backward()
             value_optim.step()
 
-for i in range(args.resume_point, 1001):
+for i in tqdm(range(args.resume_point, 1001)):
     # print("++++")
     PPO_step()
     if i % 10 == 0:
@@ -146,6 +147,7 @@ for i in range(args.resume_point, 1001):
             requires_grad(student, False)
             student.eval()
             ema_teacher.eval()
+            print("Update Teacher Model.")
     if i == 2:
         break
 
