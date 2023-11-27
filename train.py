@@ -150,6 +150,6 @@ for i in range(args.resume_point, 1001):
             ema_teacher.eval()
             print("\tWin!!! Update Teacher Model.")
         print("\tNot that Good")
-    print(f"Finish episodes {i}. Using {time.time() - start:.2f} minutes")
+    print(f"Finish episodes {i}. Using {(time.time() - start) / 60:.2f} minutes")
 
 print("Finish Training")
