@@ -75,7 +75,6 @@ def PPO_step():
             while not done:
                 legal_actions = env.possible_actions
                 if not legal_actions:
-                    print("===============================================")
                     done = True
                     break
                 action_probs = student(torch.tensor([state]).to(device), torch.tensor([legal_actions]).to(device), torch.tensor([side]).to(device))

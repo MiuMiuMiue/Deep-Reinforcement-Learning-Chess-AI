@@ -65,14 +65,7 @@ def computeMask(legal_actions):
     mask = np.zeros((B, 4101))
 
     for i in range(B):
-        try:
-            mask[i, legal_actions[i][legal_actions[i] != -1]] = 1
-        except:
-            print(legal_actions)
-            print(legal_actions[i])
-            print(legal_actions[i][legal_actions[i] != -1])
-            raise ValueError()
-
+        mask[i, legal_actions[i][legal_actions[i] != -1]] = 1
     return torch.tensor(mask)
 
 def get_2d_sincos_pos_embed(embed_dim, grid_size, cls_token=False, extra_tokens=0):

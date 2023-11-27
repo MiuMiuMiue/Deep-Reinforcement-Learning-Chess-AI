@@ -283,7 +283,11 @@ class ChessEnvV1(gym.Env):
 
         # Bot Opponent play
         if self.opponent_policy:
-            action_probs = self.opponent_policy(torch.tensor([self.state]).to(self.device), torch.tensor([self.possible_actions]).to(self.device), torch.tensor([0]).to(self.device))[0]
+            try:
+                action_probs = self.opponent_policy(torch.tensor([self.state]).to(self.device), torch.tensor([self.possible_actions]).to(self.device), torch.tensor([0]).to(self.device))[0]
+            except:
+                print(self.possible_actions)
+                print(self.state)
             opponent_action = torch.multinomial(action_probs, 1).item() ## since it will be my own model
             while opponent_action not in self.possible_actions:
                 opponent_action = torch.multinomial(action_probs, 1).item()
