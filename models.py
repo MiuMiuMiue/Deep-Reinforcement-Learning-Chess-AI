@@ -102,7 +102,7 @@ class valueNet(nn.Module):
                  input_size=8, 
                  mlp_ratio=4.0, 
                  device=None):
-        super(betaChessAI, self).__init__()
+        super(valueNet, self).__init__()
         self.device = device
         self.num_patches = (input_size // window_size) ** 2
 
