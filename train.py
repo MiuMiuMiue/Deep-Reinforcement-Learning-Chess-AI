@@ -24,7 +24,6 @@ parser.add_argument("--ckpt", type=str, default="")
 args = parser.parse_args()
 chessModel = betaChessAI()
 
-device = 0
 LR = args.learning_rate
 GAMMA = args.gamma
 EPOCHS = args.epochs
@@ -34,22 +33,20 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 env = ChessEnvV1(log=False)
 
-chessModel = betaChessAI()
-valueModel = valueNet()
+chessModel = betaChessAI().to(device)
+valueModel = valueNet().to(device)
 policy_optim = optim.Adam(chessModel.parameters(), lr=LR)
 value_optim = optim.Adam(valueModel.parameters(), lr=LR)
 
 if args.ckpt:
     chessModel, valueModel, policy_optim, value_optim = resume_from_ckpt(chessModel, valueModel, policy_optim, value_optim, args.ckpt)
     ema_teacher = deepcopy(chessModel).to(device)
-    chessModel = chessModel.to(device)
     update_ema(ema_teacher, chessModel)
 else:
     ema_teacher = deepcopy(chessModel).to(device)
-    chessModel = chessModel.to(device)
     update_ema(ema_teacher, chessModel, decay=0)
 
-student = deepcopy(chessModel)
+student = deepcopy(chessModel).to(device)
 requires_grad(student, False)
 requires_grad(ema_teacher, False)
 student.eval()
