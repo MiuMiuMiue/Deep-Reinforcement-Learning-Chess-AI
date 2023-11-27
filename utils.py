@@ -65,7 +65,12 @@ def computeMask(legal_actions):
     mask = np.zeros((B, 4101))
 
     for i in range(B):
-        mask[i, legal_actions[i][legal_actions[i] != -1]] = 1
+        try:
+            mask[i, legal_actions[i][legal_actions[i] != -1]] = 1
+        except:
+            print(legal_actions[i])
+            print(legal_actions[i][legal_actions[i] != -1])
+            raise ValueError()
 
     return torch.tensor(mask)
 
