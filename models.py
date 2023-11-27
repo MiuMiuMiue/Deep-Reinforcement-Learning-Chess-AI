@@ -122,7 +122,7 @@ class valueNet(nn.Module):
         pos_embed = get_2d_sincos_pos_embed(self.pos_embed.shape[-1], int(self.num_patches ** 0.5))
         self.pos_embed.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
 
-    def forward(self, x, actions, side):
+    def forward(self, x, side):
         B, _, _ = x.shape
 
         x = encodeBoard(x, side, B).to(self.device) # (B, 13, 8, 8)
