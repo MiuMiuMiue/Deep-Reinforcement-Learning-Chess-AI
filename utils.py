@@ -32,6 +32,7 @@ def window_reverse(windows, window_size, H, W):
 def encodeBoard(x, side, B):
     assert x.shape == (B, 8, 8)
     x = x.cpu().numpy()
+    side = side.cpu().numpy()
 
     B, _, _ = x.shape
     boards = np.zeros((B, 13, 8, 8))
