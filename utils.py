@@ -156,29 +156,6 @@ def resume_from_ckpt(policyModel, valueModel, policyOptim, valueOptim, ckptPath)
 
     return policyModel, valueModel, policyOptim, valueOptim
 
-def switchTeacher(student, teacher, device):
-    game_env = ChessEnvV1(opponent=teacher, log=False, device=device)
-    student.eval()
-    count = 0
-
-    for _ in range(10):
-        side = random.choice((0, 1))
-        state = game_env.reset(player_color="WHITE", opponent=teacher) if side == 0 else game_env.reset(player_color="BLACK", opponent=teacher)
-        done = False
-        
-        while not done:
-            actions = game_env.possible_actions
-            action_probs = student(state, actions, side)
-            action = torch.multinomial(action_probs, 1).item()
-            next_state, reward, done, _ = game_env.step(action)
-
-            state = next_state
-        
-        if reward > 0:
-            count += 1
-    
-    return count > 5
-
 def requires_grad(model, flag=True):
     """
     Set requires_grad flag for all parameters in a model.
@@ -186,8 +163,8 @@ def requires_grad(model, flag=True):
     for p in model.parameters():
         p.requires_grad = flag
 
-def switchTeacherStudent(student, teacher):
-    game_env = ChessEnvV1()
+def switchTeacherStudent(student, teacher, device):
+    game_env = ChessEnvV1(device=device)
     with torch.no_grad():
         count = 0
         for _ in range(10):
