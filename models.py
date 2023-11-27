@@ -54,7 +54,8 @@ class betaChessAI(nn.Module):
                  num_heads=8,
                  window_size=2,
                  input_size=8, 
-                 mlp_ratio=4.0):
+                 mlp_ratio=4.0, 
+                 device=None):
         super(betaChessAI, self).__init__()
         self.num_patches = (input_size // window_size) ** 2
 
@@ -78,9 +79,9 @@ class betaChessAI(nn.Module):
     def forward(self, x, actions, side):
         B, _, _ = x.shape
 
-        x = encodeBoard(x, side, B) # (B, 13, 8, 8)
+        x = encodeBoard(x, side, B).to(self.device) # (B, 13, 8, 8)
         x = self.conv1(x) # (B, hidden_channel, 8, 8)
-        mask = computeMask(actions) # (B, 64 * 64 + 5)
+        mask = computeMask(actions).to(self.device) # (B, 64 * 64 + 5)
 
         for block in self.blocks:
             x = block(x, self.pos_embed) # (B, hidden_channel, 8, 8)
@@ -88,15 +89,16 @@ class betaChessAI(nn.Module):
         special_actions = self.approx_gelu(self.linear2(rearrange(x, "B C H W -> B (H W C)")))
         x = self.approx_gelu(self.linear1(rearrange(x, "B C H W -> B (H W C)")))
 
-        return decodeOutput(x, special_actions, B, mask) # (B, 8 * 8 * 64 + 5)
+        return decodeOutput(x, special_actions, B, mask).to(self.device) # (B, 8 * 8 * 64 + 5)
 
 class valueNet(nn.Module):
-    def __init__(self, hidden_size=1024, channel_size=13):
+    def __init__(self, hidden_size=1024, channel_size=13, device=None):
         super(valueNet, self).__init__()
+        self.device = device
         approx_gelu = lambda: nn.GELU(approximate="tanh")
         self.mlp = Mlp(in_features=channel_size * 64, hidden_features=hidden_size, out_features=1, act_layer=approx_gelu, drop=0.1)
     
     def forward(self, x, side):
         B, _, _ = x.shape
-        x = encodeBoard(x, side, B) # (B, 13, 8, 8)
+        x = encodeBoard(x, side, B).to(self.device) # (B, 13, 8, 8)
         return self.mlp(rearrange(x, "B C H W -> B (H W C)"))

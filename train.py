@@ -33,8 +33,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 env = ChessEnvV1(log=False, device=device)
 
-chessModel = betaChessAI().to(device)
-valueModel = valueNet().to(device)
+chessModel = betaChessAI(device=device).to(device)
+valueModel = valueNet(device=device).to(device)
 policy_optim = optim.Adam(chessModel.parameters(), lr=LR)
 value_optim = optim.Adam(valueModel.parameters(), lr=LR)
 
