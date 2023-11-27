@@ -67,30 +67,31 @@ def compute_returns(rewards):
 
 def PPO_step():
     with torch.no_grad():
-        side = random.choice((0, 1))
-        state = env.reset(player_color="WHITE", opponent=ema_teacher) if side == 0 else env.reset(player_color="BLACK", opponent=ema_teacher)
-        done = False
         states, actions, log_probs_old, rewards = [], [], [], []
         sides, all_legal_actions = [], []
-
-        while not done:
-            legal_actions = env.possible_actions
-            action_probs = student(torch.tensor([state]).to(device), torch.tensor([legal_actions]).to(device), torch.tensor([side]).to(device))
-            action = torch.multinomial(action_probs, 1).item()
-            while action not in legal_actions:
+        for _ in range(5):
+            side = random.choice((0, 1))
+            print(side)
+            state = env.reset(player_color="WHITE", opponent=ema_teacher) if side == 0 else env.reset(player_color="BLACK", opponent=ema_teacher)
+            done = False
+            while not done:
+                legal_actions = env.possible_actions
+                action_probs = student(torch.tensor([state]).to(device), torch.tensor([legal_actions]).to(device), torch.tensor([side]).to(device))
                 action = torch.multinomial(action_probs, 1).item()
-            next_state, reward, done, _ = env.step(action)
-            
-            states.append(torch.tensor(state))
-            actions.append(action)
-            log_probs_old.append(torch.log(action_probs[0, action]))
-            rewards.append(reward)
+                while action not in legal_actions:
+                    action = torch.multinomial(action_probs, 1).item()
+                next_state, reward, done, _ = env.step(action)
+                
+                states.append(torch.tensor(state))
+                actions.append(action)
+                log_probs_old.append(torch.log(action_probs[0, action]))
+                rewards.append(reward)
 
-            sides.append(torch.tensor(side))
-            legal_actions = torch.tensor(legal_actions)
-            all_legal_actions.append(nn.functional.pad(legal_actions, (0, 50 - len(legal_actions)), value=-1))
+                sides.append(torch.tensor(side))
+                legal_actions = torch.tensor(legal_actions)
+                all_legal_actions.append(nn.functional.pad(legal_actions, (0, 50 - len(legal_actions)), value=-1))
 
-            state = next_state
+                state = next_state
 
     returns = compute_returns(rewards)
     values = valueModel(torch.stack(states).to(device), torch.stack(sides).to(device))
