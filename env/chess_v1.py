@@ -273,6 +273,8 @@ class ChessEnvV1(gym.Env):
         opponent_player = self.switch_player()
         self.possible_moves = self.get_possible_moves(player=opponent_player)
         # check if there are no possible_moves for opponent
+        if not self.possible_moves:
+            print("=============================")
         if not self.possible_moves and self.king_is_checked(
             state=self.state, player=opponent_player
         ):
