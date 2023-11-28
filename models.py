@@ -91,7 +91,9 @@ class betaChessAI(nn.Module):
         for block in self.blocks:
             x = self.batchNorm2d(block(x, self.pos_embed)) # (B, hidden_channel, 8, 8)
 
-        special_actions = self.batchNorm1d_2(self.linear2(rearrange(x, "B C H W -> B (H W C)")))
+        special_actions = self.linear2(rearrange(x, "B C H W -> B (H W C)"))
+        print(special_actions.shape)
+        special_actions = self.batchNorm1d_2(special_actions)
         x = self.batchNorm1d_1(self.linear1(rearrange(x, "B C H W -> B (H W C)")))
 
         return decodeOutput(x, special_actions, B, mask).to(self.device) # (B, 8 * 8 * 64 + 5)
