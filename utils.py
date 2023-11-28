@@ -184,7 +184,7 @@ def switchTeacherStudent(student, teacher, device):
             while not done:
                 actions = game_env.possible_actions
 
-                action_probs = student(torch.tensor([state]).to(device), torch.tensor([actions]).to(device), torch.tensor([side]).to(device))[0]
+                action_probs = student(torch.tensor([state]).to(device), torch.tensor([actions]).to(device), torch.tensor([side]).to(device))
                 action = torch.multinomial(action_probs, 1).item()
                 while action not in actions:
                     action = torch.multinomial(action_probs, 1).item()
