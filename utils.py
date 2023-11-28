@@ -6,6 +6,7 @@ import os
 from collections import OrderedDict
 import random
 from env import ChessEnvV1
+import traceback
 
 def window_partition(x, window_size):
     # This is the Patchify function that can divide the image into smaller patch
@@ -59,9 +60,11 @@ def decodeOutput(x, y, B, mask):
 
     try:
         action = torch.multinomial(all_actions, 1).item()
-    except RuntimeError:
+    except RuntimeError as error:
         print(all_actions)
         print(all_actions1)
+        print(error)
+        traceback.print_exc()
         raise RuntimeError
 
     return all_actions # (B, 64 * 8 * 8 + 5)
