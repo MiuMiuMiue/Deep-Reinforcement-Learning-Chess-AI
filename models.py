@@ -115,8 +115,8 @@ class valueNet(nn.Module):
         ])
         self.pos_embed = nn.Parameter(torch.zeros(1, int((input_size / window_size) ** 2), hidden_size), requires_grad=False)
         self.batchNorm2d = nn.BatchNorm2d(hidden_channel)
-        self.batchNorm1d = nn.BatchNorm1d(64 * 64)
-        self.linear1 = nn.Linear(in_features=hidden_channel * 64, out_features=1, bias=True)
+        approx_gelu = lambda: nn.GELU(approximate="tanh")
+        self.linear1 = Mlp(in_features=hidden_channel * 64, hidden_features=hidden_channel * 64, out_features=1, act_layer=approx_gelu)
 
         self.initialize_weights()
     
@@ -134,6 +134,6 @@ class valueNet(nn.Module):
         for block in self.blocks:
             x = self.batchNorm2d(block(x, self.pos_embed)) # (B, hidden_channel, 8, 8)
     
-        x = self.batchNorm1d(self.linear1(rearrange(x, "B C H W -> B (H W C)")))
+        x = self.linear1(rearrange(x, "B C H W -> B (H W C)"))
 
         return x
