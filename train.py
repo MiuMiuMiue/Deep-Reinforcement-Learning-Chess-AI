@@ -140,15 +140,15 @@ for i in range(args.resume_point, 1001):
     if i % 5 == 0:
         print("\tPlaying against teacher")
         switch = switchTeacherStudent(chessModel, ema_teacher, device)
-        if switch:
+        if switch > 5:
             student = deepcopy(chessModel)
             ema_teacher = update_ema(ema_teacher, chessModel)
             requires_grad(ema_teacher, False)
             requires_grad(student, False)
             student.eval()
             ema_teacher.eval()
-            print("\tWin!!! Update Teacher Model.")
-        print("\tNot that Good")
+            print(f"\tWin!!! Update Teacher Model. {switch} / 10")
+        print(f"\tNot that Good. {switch} / 10")
     print(f"Finish episodes {i}. Using {(time.time() - start) / 60:.2f} minutes")
 
 print("Finish Training")

@@ -185,6 +185,6 @@ def switchTeacherStudent(student, teacher, device):
             if reward > 0:
                 count += 1
     
-    return count > 5
+    return count
 
     

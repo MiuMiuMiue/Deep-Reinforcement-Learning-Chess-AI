@@ -279,6 +279,7 @@ class ChessEnvV1(gym.Env):
             self.done = True
             reward += WIN_REWARD
         elif not self.possible_moves:
+            print("triggerrrrrrrrrrrrrrrrrrrred")
             return (
                 self.state,
                 0.0,
