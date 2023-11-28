@@ -68,7 +68,7 @@ def PPO_step():
     with torch.no_grad():
         states, actions, log_probs_old, rewards = [], [], [], []
         sides, all_legal_actions = [], []
-        for _ in range(5):
+        for _ in range(1):
             side = random.choice((0, 1))
             state = env.reset(player_color="WHITE", opponent=ema_teacher) if side == 0 else env.reset(player_color="BLACK", opponent=ema_teacher)
             done = False
@@ -90,7 +90,8 @@ def PPO_step():
                 all_legal_actions.append(nn.functional.pad(legal_actions, (0, 50 - len(legal_actions)), value=-1))
 
                 state = next_state
-
+        print(side)
+        print(rewards)
     returns = compute_returns(rewards).to(device)
     values = valueModel(torch.stack(states).to(device), torch.stack(sides).to(device))
     advantages = returns - values.squeeze()
@@ -117,11 +118,13 @@ def PPO_step():
             # print(f"batch_advantages: {batch_advantages.shape}")
 
             surrogate_obj1 = ratio * batch_advantages.detach()
+            # print(surrogate_obj1)
             surrogate_obj2 = torch.clamp(ratio, 1-CLIP_EPS, 1+CLIP_EPS) * batch_advantages.detach()
+            # print(surrogate_obj2)
             policy_loss = -torch.min(surrogate_obj1, surrogate_obj2).mean()
-
+            print(f"\tpolicy_loss: {policy_loss}")
             value_loss = loss(valueModel(batch_states, batch_sides), batch_returns.unsqueeze(-1))
-
+            print(f"\tvalue_loss: {value_loss}")
             policy_optim.zero_grad()
             policy_loss.backward()
             policy_optim.step()

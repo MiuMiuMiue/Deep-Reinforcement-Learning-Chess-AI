@@ -192,7 +192,7 @@ def switchTeacherStudent(student, teacher, device):
 
                 state = new_state
             
-            if reward > 0:
+            if reward >= 0:
                 count += 1
     
     return count

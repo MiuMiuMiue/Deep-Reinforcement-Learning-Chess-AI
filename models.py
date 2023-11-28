@@ -49,7 +49,7 @@ class betaChessBlock(nn.Module):
 
 class betaChessAI(nn.Module):
     def __init__(self, 
-                 depth=5, 
+                 depth=10, 
                  hidden_size=1024, 
                  hidden_channel=128,
                  num_heads=8,
@@ -98,7 +98,7 @@ class betaChessAI(nn.Module):
 
 class valueNet(nn.Module):
     def __init__(self, 
-                 depth=5, 
+                 depth=10, 
                  hidden_size=1024, 
                  hidden_channel=128,
                  num_heads=8,
