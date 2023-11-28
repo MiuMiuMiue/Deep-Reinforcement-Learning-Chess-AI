@@ -68,7 +68,7 @@ def PPO_step():
     with torch.no_grad():
         states, actions, log_probs_old, rewards = [], [], [], []
         sides, all_legal_actions = [], []
-        for _ in range(1):
+        for _ in range(5):
             side = random.choice((0, 1))
             state = env.reset(player_color="WHITE", opponent=ema_teacher) if side == 0 else env.reset(player_color="BLACK", opponent=ema_teacher)
             done = False
@@ -90,8 +90,6 @@ def PPO_step():
                 all_legal_actions.append(nn.functional.pad(legal_actions, (0, 50 - len(legal_actions)), value=-1))
 
                 state = next_state
-        print(side)
-        print(rewards)
     returns = compute_returns(rewards).to(device)
     values = valueModel(torch.stack(states).to(device), torch.stack(sides).to(device))
     advantages = returns - values.squeeze()
