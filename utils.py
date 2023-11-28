@@ -185,13 +185,7 @@ def switchTeacherStudent(student, teacher, device):
                 actions = game_env.possible_actions
 
                 action_probs = student(torch.tensor([state]), torch.tensor([actions]), torch.tensor([side]))[0]
-                try:
-                    action = torch.multinomial(action_probs, 1).item()
-                except RuntimeError:
-                    print(action_probs)
-                    print(action_probs[action_probs < 0])
-                    print(action_probs[action_probs == torch.nan])
-                    print(action_probs[action_probs == np.inf])
+                action = torch.multinomial(action_probs, 1).item()
                 while action not in actions:
                     action = torch.multinomial(action_probs, 1).item()
                 new_state, reward, done, info = game_env.step(action)
