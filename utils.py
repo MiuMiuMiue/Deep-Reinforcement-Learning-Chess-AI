@@ -62,6 +62,7 @@ def decodeOutput(x, y, B, mask):
     except RuntimeError:
         print(all_actions)
         print(all_actions1)
+        raise RuntimeError
 
     return all_actions # (B, 64 * 8 * 8 + 5)
 
