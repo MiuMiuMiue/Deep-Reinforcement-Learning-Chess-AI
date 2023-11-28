@@ -64,7 +64,7 @@ class betaChessAI(nn.Module):
         self.blocks = nn.ModuleList([
             betaChessBlock(hidden_size, hidden_channel, num_heads, window_size, mlp_ratio) for _ in range(depth)
         ])
-        self.pos_embed = nn.Parameter(torch.zeros(1, int((input_size / window_size) ** 2), hidden_size), requires_grad=False)
+        self.pos_embed = nn.Parameter(torch.zeros(1, int((input_size / window_size) ** 2), hidden_channel * window_size ** 2), requires_grad=False)
 
         self.batchNorm1d_1 = nn.BatchNorm1d(64 * 64)
         self.batchNorm1d_2 = nn.BatchNorm1d(5)
