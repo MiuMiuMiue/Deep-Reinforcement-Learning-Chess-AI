@@ -136,7 +136,7 @@ for i in range(args.resume_point, 1001):
     print(f"Episodes: {i}")
     PPO_step()
     if i % 10 == 0:
-        save_ckpt(chessModel, valueModel, policy_optim, value_optim, args.result_dir, i)
+        save_ckpt(chessModel, valueModel, policy_optim, value_optim, args.results_dir, i)
     if i % 5 == 0:
         print("\tPlaying against teacher")
         switch = switchTeacherStudent(chessModel, ema_teacher, device)
