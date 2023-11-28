@@ -114,7 +114,8 @@ class valueNet(nn.Module):
             betaChessBlock(hidden_size, hidden_channel, num_heads, window_size, mlp_ratio) for _ in range(depth)
         ])
         self.pos_embed = nn.Parameter(torch.zeros(1, int((input_size / window_size) ** 2), hidden_size), requires_grad=False)
-
+        self.batchNorm2d = nn.BatchNorm2d(hidden_channel)
+        self.batchNorm1d = nn.BatchNorm1d(64 * 64)
         self.linear1 = nn.Linear(in_features=hidden_channel * 64, out_features=1, bias=True)
 
         self.initialize_weights()
@@ -131,8 +132,8 @@ class valueNet(nn.Module):
         x = self.conv1(x) # (B, hidden_channel, 8, 8)
 
         for block in self.blocks:
-            x = block(x, self.pos_embed) # (B, hidden_channel, 8, 8)
+            x = self.batchNorm2d(block(x, self.pos_embed)) # (B, hidden_channel, 8, 8)
     
-        x = self.linear1(rearrange(x, "B C H W -> B (H W C)"))
+        x = self.batchNorm1d(self.linear1(rearrange(x, "B C H W -> B (H W C)")))
 
         return x
