@@ -31,7 +31,7 @@ class betaChessBlock(nn.Module):
         self.attn = Attention(hidden_size, num_heads=num_heads, qkv_bias=True)
 
         approx_gelu = lambda: nn.GELU(approximate="tanh")
-        self.mlp = Mlp(in_features=hidden_size, hidden_features=int(mlp_ratio * hidden_size), act_layer=approx_gelu)
+        self.mlp = Mlp(in_features=hidden_size, hidden_features=hidden_size, act_layer=approx_gelu)
 
         self.patchify = lambda x: window_partition(x, window_size)
         self.unpatchify = lambda x, H, W: window_reverse(x, window_size, H, W)
@@ -62,7 +62,7 @@ class betaChessAI(nn.Module):
 
         self.conv1 = nn.Conv2d(in_channels=13, out_channels=hidden_channel, kernel_size=3, padding=1)
         self.blocks = nn.ModuleList([
-            betaChessBlock(hidden_size, hidden_channel, num_heads, window_size, mlp_ratio) for _ in range(depth)
+            betaChessBlock(hidden_channel * window_size ** 2, hidden_channel, num_heads, window_size, mlp_ratio) for _ in range(depth)
         ])
         self.pos_embed = nn.Parameter(torch.zeros(1, int((input_size / window_size) ** 2), hidden_channel * window_size ** 2), requires_grad=False)
 
