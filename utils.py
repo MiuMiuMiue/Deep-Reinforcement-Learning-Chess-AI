@@ -178,6 +178,7 @@ def switchTeacherStudent(student, teacher, device):
     with torch.no_grad():
         count = 0
         for _ in range(10):
+            print("game starts ...")
             side = random.choice((0, 1))
             state = game_env.reset(player_color="WHITE", opponent=teacher) if side == 0 else game_env.reset(player_color="BLACK", opponent=teacher)
             done = False
@@ -191,7 +192,7 @@ def switchTeacherStudent(student, teacher, device):
                 new_state, reward, done, info = game_env.step(action)
 
                 state = new_state
-            
+            print(f"game result reward: {reward}")
             if reward >= 0:
                 count += 1
     
