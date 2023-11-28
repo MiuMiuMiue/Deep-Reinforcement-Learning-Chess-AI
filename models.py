@@ -66,7 +66,10 @@ class betaChessAI(nn.Module):
         ])
         self.pos_embed = nn.Parameter(torch.zeros(1, int((input_size / window_size) ** 2), hidden_size), requires_grad=False)
 
-        self.approx_gelu = nn.GELU(approximate="tanh")
+        self.batchNorm1d_1 = nn.BatchNorm1d(64 * 64)
+        self.batchNorm1d_2 = nn.BatchNorm1d(5)
+        self.batchNorm2d = nn.BatchNorm2d(hidden_channel)
+
         self.linear1 = nn.Linear(in_features=hidden_channel * 64, out_features=64 * 64, bias=True)
         self.linear2 = nn.Linear(in_features=hidden_channel * 64, out_features=5, bias=True)
 
@@ -85,10 +88,10 @@ class betaChessAI(nn.Module):
         mask = computeMask(actions).to(self.device) # (B, 64 * 64 + 5)
 
         for block in self.blocks:
-            x = block(x, self.pos_embed) # (B, hidden_channel, 8, 8)
+            x = self.batchNorm2d(block(x, self.pos_embed)) # (B, hidden_channel, 8, 8)
 
-        special_actions = self.approx_gelu(self.linear2(rearrange(x, "B C H W -> B (H W C)")))
-        x = self.approx_gelu(self.linear1(rearrange(x, "B C H W -> B (H W C)")))
+        special_actions = self.batchNorm1d_2(self.linear2(rearrange(x, "B C H W -> B (H W C)")))
+        x = self.batchNorm1d_1(self.linear1(rearrange(x, "B C H W -> B (H W C)")))
 
         return decodeOutput(x, special_actions, B, mask).to(self.device) # (B, 8 * 8 * 64 + 5)
 
@@ -112,7 +115,6 @@ class valueNet(nn.Module):
         ])
         self.pos_embed = nn.Parameter(torch.zeros(1, int((input_size / window_size) ** 2), hidden_size), requires_grad=False)
 
-        self.approx_gelu = nn.GELU(approximate="tanh")
         self.linear1 = nn.Linear(in_features=hidden_channel * 64, out_features=1, bias=True)
 
         self.initialize_weights()
