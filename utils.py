@@ -131,8 +131,8 @@ def update_ema(ema_model, model, decay=0.9999):
 
 def save_ckpt(policyModel, valueModel, policyOptim, valueOptim, dir, step):
     checkpoint = {
-        "policyModel": policyModel.module.state_dict(), 
-        "valueModel": valueModel.module.state_dict(), 
+        "policyModel": policyModel.state_dict(), 
+        "valueModel": valueModel.state_dict(), 
         "policyOptim": policyOptim.state_dict(), 
         "valueOptim": valueOptim.state_dict()
         }
