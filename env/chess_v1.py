@@ -279,7 +279,6 @@ class ChessEnvV1(gym.Env):
             self.done = True
             reward += WIN_REWARD
         elif not self.possible_moves:
-            print("triggerrrrrrrrrrrrrrrrrrrred")
             return (
                 self.state,
                 0.0,
@@ -307,6 +306,13 @@ class ChessEnvV1(gym.Env):
             ):
                 self.done = True
                 reward += LOSS_REWARD
+            elif not self.possible_moves:
+                return (
+                self.state,
+                0.0,
+                True,
+                self.info,
+                )
 
         # increment count on WHITE
         if self.current_player == WHITE:
