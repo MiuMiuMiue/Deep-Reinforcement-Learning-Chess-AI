@@ -61,9 +61,9 @@ def decodeOutput(x, y, B, mask):
     try:
         action = torch.multinomial(all_actions[0], 1).item()
     except RuntimeError as error:
-        print(all_actions[0])
+        print(x[0])
         print(all_actions1[0])
-        print(error)
+        print(all_actions[0])
         traceback.print_exc()
         raise RuntimeError
 
