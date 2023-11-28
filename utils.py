@@ -54,8 +54,14 @@ def decodeOutput(x, y, B, mask):
 
     sm = nn.Softmax(dim=1)
 
-    all_actions = torch.cat((x, y), dim=1) * mask
-    all_actions = sm(all_actions)
+    all_actions1 = torch.cat((x, y), dim=1) * mask
+    all_actions = sm(all_actions1)
+
+    try:
+        action = torch.multinomial(all_actions, 1).item()
+    except RuntimeError:
+        print(all_actions)
+        print(all_actions1)
 
     return all_actions # (B, 64 * 8 * 8 + 5)
 
@@ -180,7 +186,7 @@ def switchTeacherStudent(student, teacher, device):
                 except RuntimeError:
                     print(action_probs)
                     print(action_probs[action_probs < 0])
-                    print(action_probs[action_probs == np.nan])
+                    print(action_probs[action_probs == torch.nan])
                     print(action_probs[action_probs == np.inf])
                 while action not in actions:
                     action = torch.multinomial(action_probs, 1).item()
