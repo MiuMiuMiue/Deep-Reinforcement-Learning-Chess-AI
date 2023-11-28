@@ -67,9 +67,9 @@ class betaChessAI(nn.Module):
         ])
         self.pos_embed = nn.Parameter(torch.zeros(1, int((input_size / window_size) ** 2), hidden_channel * window_size ** 2), requires_grad=False)
 
-        self.batchNorm1d_1 = nn.BatchNorm1d(64 * 64)
-        self.batchNorm1d_2 = nn.BatchNorm1d(5)
-        self.batchNorm2d = nn.BatchNorm2d(hidden_channel)
+        self.instanceNorm1d_1 = nn.InstanceNorm1d(64 * 64)
+        self.instanceNorm1d_2 = nn.InstanceNorm1d(5)
+        self.instanceNorm2d = nn.InstanceNorm2d(hidden_channel)
 
         self.linear1 = nn.Linear(in_features=hidden_channel * 64, out_features=64 * 64, bias=True)
         self.linear2 = nn.Linear(in_features=hidden_channel * 64, out_features=5, bias=True)
@@ -89,15 +89,11 @@ class betaChessAI(nn.Module):
         mask = computeMask(actions).to(self.device) # (B, 64 * 64 + 5)
 
         for block in self.blocks:
-            x = self.batchNorm2d(block(x, self.pos_embed)) # (B, hidden_channel, 8, 8)
+            x = self.instanceNorm2d(block(x, self.pos_embed)) # (B, hidden_channel, 8, 8)
 
         special_actions = self.linear2(rearrange(x, "B C H W -> B (H W C)"))
-        try:
-            special_actions = self.batchNorm1d_2(special_actions)
-        except:
-            print(special_actions.shape)
-            raise RuntimeError
-        x = self.batchNorm1d_1(self.linear1(rearrange(x, "B C H W -> B (H W C)")))
+        special_actions = self.instanceNorm1d_2(special_actions)
+        x = self.instanceNorm1d_1(self.linear1(rearrange(x, "B C H W -> B (H W C)")))
 
         return decodeOutput(x, special_actions, B, mask).to(self.device) # (B, 8 * 8 * 64 + 5)
 
@@ -120,7 +116,7 @@ class valueNet(nn.Module):
             betaChessBlock(hidden_channel * window_size ** 2, hidden_channel, num_heads, window_size, mlp_ratio) for _ in range(depth)
         ])
         self.pos_embed = nn.Parameter(torch.zeros(1, int((input_size / window_size) ** 2), hidden_channel * window_size ** 2), requires_grad=False)
-        self.batchNorm2d = nn.BatchNorm2d(hidden_channel)
+        self.instanceNorm2d = nn.InstanceNorm2d(hidden_channel)
         approx_gelu = lambda: nn.GELU(approximate="tanh")
         self.mlp = Mlp(in_features=hidden_channel * 64, hidden_features=hidden_channel * 64, out_features=1, act_layer=approx_gelu)
 
@@ -138,7 +134,7 @@ class valueNet(nn.Module):
         x = self.conv1(x) # (B, hidden_channel, 8, 8)
 
         for block in self.blocks:
-            x = self.batchNorm2d(block(x, self.pos_embed)) # (B, hidden_channel, 8, 8)
+            x = self.instanceNorm2d(block(x, self.pos_embed)) # (B, hidden_channel, 8, 8)
     
         x = self.mlp(rearrange(x, "B C H W -> B (H W C)"))
 
