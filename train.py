@@ -36,8 +36,8 @@ env = ChessEnvV1(log=False, device=device)
 
 chessModel = betaChessAI(device=device, depth=5).to(device)
 valueModel = valueNet(device=device, depth=5).to(device)
-policy_optim = optim.Adam(chessModel.parameters(), lr=LR)
-value_optim = optim.Adam(valueModel.parameters(), lr=LR)
+policy_optim = optim.AdamW(chessModel.parameters(), lr=LR)
+value_optim = optim.AdamW(valueModel.parameters(), lr=LR)
 
 if args.ckpt:
     chessModel, valueModel, policy_optim, value_optim = resume_from_ckpt(chessModel, valueModel, policy_optim, value_optim, args.ckpt)
@@ -91,7 +91,7 @@ def PPO_step():
                 all_legal_actions.append(nn.functional.pad(legal_actions, (0, 50 - len(legal_actions)), value=-1))
 
                 state = next_state
-        print(actions)
+    
         returns = compute_returns(rewards).to(device)
         values = valueModel(torch.stack(states).to(device), torch.stack(sides).to(device))
         advantages = returns - values.squeeze()
