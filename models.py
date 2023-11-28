@@ -42,11 +42,7 @@ class betaChessBlock(nn.Module):
         x = self.resBlock(x)
         x = self.patchify(x) + pos_embed
         x = self.attn(x)
-        try:
-            x = self.mlp(x)
-        except:
-            print(x.shape)
-            raise ValueError
+        x = self.mlp(x)
         
         return self.unpatchify(x, H, W)
 
@@ -116,7 +112,7 @@ class valueNet(nn.Module):
 
         self.conv1 = nn.Conv2d(in_channels=13, out_channels=hidden_channel, kernel_size=3, padding=1)
         self.blocks = nn.ModuleList([
-            betaChessBlock(hidden_size, hidden_channel, num_heads, window_size, mlp_ratio) for _ in range(depth)
+            betaChessBlock(hidden_channel * window_size ** 2, hidden_channel, num_heads, window_size, mlp_ratio) for _ in range(depth)
         ])
         self.pos_embed = nn.Parameter(torch.zeros(1, int((input_size / window_size) ** 2), hidden_channel * window_size ** 2), requires_grad=False)
         self.batchNorm2d = nn.BatchNorm2d(hidden_channel)
