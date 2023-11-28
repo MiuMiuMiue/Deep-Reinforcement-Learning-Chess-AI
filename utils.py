@@ -164,7 +164,7 @@ def requires_grad(model, flag=True):
         p.requires_grad = flag
 
 def switchTeacherStudent(student, teacher, device):
-    game_env = ChessEnvV1(device=device)
+    game_env = ChessEnvV1(device=device, log=False)
     with torch.no_grad():
         count = 0
         for _ in range(10):
