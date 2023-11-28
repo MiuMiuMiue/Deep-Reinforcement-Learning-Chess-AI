@@ -34,8 +34,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 env = ChessEnvV1(log=False, device=device)
 
-chessModel = betaChessAI(device=device).to(device)
-valueModel = valueNet(device=device).to(device)
+chessModel = betaChessAI(device=device, depth=5).to(device)
+valueModel = valueNet(device=device, depth=5).to(device)
 policy_optim = optim.Adam(chessModel.parameters(), lr=LR)
 value_optim = optim.Adam(valueModel.parameters(), lr=LR)
 
@@ -65,6 +65,7 @@ def compute_returns(rewards):
     return torch.tensor(returns)
 
 def PPO_step():
+    valueModel.eval()
     with torch.no_grad():
         states, actions, log_probs_old, rewards = [], [], [], []
         sides, all_legal_actions = [], []
@@ -90,10 +91,12 @@ def PPO_step():
                 all_legal_actions.append(nn.functional.pad(legal_actions, (0, 50 - len(legal_actions)), value=-1))
 
                 state = next_state
-    returns = compute_returns(rewards).to(device)
-    values = valueModel(torch.stack(states).to(device), torch.stack(sides).to(device))
-    advantages = returns - values.squeeze()
+        print(actions)
+        returns = compute_returns(rewards).to(device)
+        values = valueModel(torch.stack(states).to(device), torch.stack(sides).to(device))
+        advantages = returns - values.squeeze()
 
+    valueModel.train()
     for _ in range(EPOCHS):
         for i in range(0, len(states), BATCH_SIZE):
             # print("===")
