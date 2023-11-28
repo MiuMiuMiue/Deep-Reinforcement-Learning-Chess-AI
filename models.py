@@ -42,8 +42,11 @@ class betaChessBlock(nn.Module):
         x = self.resBlock(x)
         x = self.patchify(x) + pos_embed
         x = self.attn(x)
-        print(x.shape)
-        x = self.mlp(x)
+        try:
+            x = self.mlp(x)
+        except:
+            print(x.shape)
+            raise ValueError
         
         return self.unpatchify(x, H, W)
 
