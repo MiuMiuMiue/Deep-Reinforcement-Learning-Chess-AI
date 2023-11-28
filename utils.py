@@ -59,10 +59,10 @@ def decodeOutput(x, y, B, mask):
     all_actions = sm(all_actions1)
 
     try:
-        action = torch.multinomial(all_actions, 1).item()
+        action = torch.multinomial(all_actions[0], 1).item()
     except RuntimeError as error:
-        print(all_actions)
-        print(all_actions1)
+        print(all_actions[0])
+        print(all_actions1[0])
         print(error)
         traceback.print_exc()
         raise RuntimeError
