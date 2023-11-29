@@ -40,11 +40,12 @@ class betaChessBlock(nn.Module):
         _, _, H, W = x.shape
 
         x = self.resBlock(x)
+        initial = x
         x = self.patchify(x) + pos_embed
         x = self.attn(x)
         x = self.mlp(x)
         
-        return self.unpatchify(x, H, W)
+        return initial + self.unpatchify(x, H, W)
 
 
 class betaChessAI(nn.Module):
