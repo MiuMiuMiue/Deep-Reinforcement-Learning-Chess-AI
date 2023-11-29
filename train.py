@@ -71,7 +71,7 @@ def PPO_step():
         sides, all_legal_actions = [], []
         for _ in range(5):
             side = random.choice((0, 1))
-            print(f"\t side info: {side}")
+            # print(f"\t side info: {side}")
             state = env.reset(player_color="WHITE", opponent=ema_teacher) if side == 0 else env.reset(player_color="BLACK", opponent=ema_teacher)
             done = False
             while not done:
