@@ -191,7 +191,7 @@ def switchTeacherStudent(student, teacher, device):
                     pass
 
             print(f"\tgame result reward: {reward}")
-            if reward > 0:
+            if reward >= 0:
                 count += 1
     
     return count
