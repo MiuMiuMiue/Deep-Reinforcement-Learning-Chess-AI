@@ -32,8 +32,8 @@ class betaChessBlock(nn.Module):
 
         approx_gelu = lambda: nn.GELU(approximate="tanh")
         self.mlp = Mlp(in_features=hidden_size, hidden_features=hidden_size, act_layer=approx_gelu)
-        self.batchNorm1 = nn.BatchNorm2d(hidden_size)
-        self.batchNorm2 = nn.BatchNorm2d(hidden_size)
+        self.layerNorm1 = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
+        self.layerNorm2 = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
 
         self.patchify = lambda x: window_partition(x, window_size)
         self.unpatchify = lambda x, H, W: window_reverse(x, window_size, H, W)
@@ -43,8 +43,8 @@ class betaChessBlock(nn.Module):
 
         x = self.resBlock(x)
         x = self.patchify(x) + pos_embed
-        x = x + self.batchNorm1(self.attn(x))
-        x = x + self.batchNorm2(self.mlp(x))
+        x = x + self.layerNorm1(self.attn(x))
+        x = x + self.layerNorm2(self.mlp(x))
         
         return self.unpatchify(x, H, W)
 
