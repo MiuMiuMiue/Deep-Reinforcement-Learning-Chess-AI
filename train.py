@@ -69,7 +69,7 @@ def PPO_step():
     with torch.no_grad():
         states, actions, log_probs_old, rewards = [], [], [], []
         sides, all_legal_actions = [], []
-        for _ in range(5):
+        for _ in range(10):
             side = random.choice((0, 1))
             # print(f"\t side info: {side}")
             state = env.reset(player_color="WHITE", opponent=ema_teacher) if side == 0 else env.reset(player_color="BLACK", opponent=ema_teacher)
