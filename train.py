@@ -75,7 +75,6 @@ def PPO_step():
             state = env.reset(player_color="WHITE", opponent=ema_teacher) if side == 0 else env.reset(player_color="BLACK", opponent=ema_teacher)
             done = False
             while not done:
-                print(env.move_count)
                 legal_actions = env.possible_actions
                 action_probs = student(torch.tensor([state]).to(device), torch.tensor([legal_actions]).to(device), torch.tensor([side]).to(device))
                 action = torch.multinomial(action_probs, 1).item()
