@@ -55,17 +55,8 @@ def decodeOutput(x, y, B, mask):
 
     sm = nn.Softmax(dim=1)
 
-    all_actions1 = torch.cat((x, y), dim=1) * mask
-    all_actions = sm(all_actions1)
-
-    try:
-        action = torch.multinomial(all_actions[0], 1).item()
-    except RuntimeError as error:
-        print(x[0])
-        print(all_actions1[0])
-        print(all_actions[0])
-        traceback.print_exc()
-        raise RuntimeError
+    all_actions = torch.cat((x, y), dim=1) * mask
+    all_actions = sm(all_actions)
 
     return all_actions # (B, 64 * 8 * 8 + 5)
 

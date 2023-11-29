@@ -37,6 +37,7 @@ from utils import *
 # print()
 # print(new_state)
 # print(reward)
-legal_actions = torch.tensor([134, 431, 325])
-test = nn.functional.pad(legal_actions, (0, 10 - len(legal_actions)), value=-1)
-print(test)
+sm = nn.Softmax(dim=1)
+test = torch.tensor([[0.012, 0, 0.004, 0.06, -0.4], 
+                     [-3, 5, 3.9, 0.4, 0.1]])
+print(sm(test))

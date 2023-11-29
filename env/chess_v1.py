@@ -244,13 +244,13 @@ class ChessEnvV1(gym.Env):
 
         # action invalid in current state
         if action not in self.possible_actions:
-            print("invalidddddddddactionnnnnnnnn")
+            # print("invalidddddddddactionnnnnnnnn")
             reward = INVALID_ACTION_REWARD
             return self.state, reward, self.done, self.info
 
         # Game is done
         if self.done:
-            print("drawwwwww1")
+            # print("drawwwwww1")
             return (
                 self.state,
                 0.0,
@@ -258,7 +258,7 @@ class ChessEnvV1(gym.Env):
                 self.info,
             )
         if self.move_count > self.moves_max:
-            print("drawwwwww2")
+            # print("drawwwwww2")
             return (
                 self.state,
                 0.0,
@@ -279,11 +279,11 @@ class ChessEnvV1(gym.Env):
         if not self.possible_moves and self.king_is_checked(
             state=self.state, player=opponent_player
         ):
-            print("winnnnnnn1")
+            # print("winnnnnnn1")
             self.done = True
             reward += WIN_REWARD
         elif not self.possible_moves:
-            print("drawwwwwww3")
+            # print("drawwwwwww3")
             return (
                 self.state,
                 0.0,
@@ -291,6 +291,7 @@ class ChessEnvV1(gym.Env):
                 self.info,
             )
         if self.done:
+            # print("dont know why")
             return self.state, reward, self.done, self.info
 
         # Bot Opponent play
@@ -309,11 +310,11 @@ class ChessEnvV1(gym.Env):
             if not self.possible_moves and self.king_is_checked(
                 state=self.state, player=agent_player
             ):
-                print("losssssssssss1")
+                # print("losssssssssss1")
                 self.done = True
                 reward += LOSS_REWARD
             elif not self.possible_moves:
-                print("drawwwwwwwwwww4")
+                # print("drawwwwwwwwwww4")
                 return (
                 self.state,
                 0.0,
@@ -322,8 +323,8 @@ class ChessEnvV1(gym.Env):
                 )
 
         # increment count on WHITE
-        if self.current_player == WHITE:
-            self.move_count += 1
+        # if self.current_player == WHITE:
+        self.move_count += 1
 
         return self.state, reward, self.done, self.info
 
