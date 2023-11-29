@@ -178,6 +178,7 @@ def switchTeacherStudent(student, teacher, device):
             # print(f"\tside info: {side}")
             done = False
             while not done:
+                moveCount = game_env.move_count
                 actions = game_env.possible_actions
 
                 action_probs = student(torch.tensor([state]).to(device), torch.tensor([actions]).to(device), torch.tensor([side]).to(device))
@@ -185,6 +186,11 @@ def switchTeacherStudent(student, teacher, device):
                 new_state, reward, done, info = game_env.step(action)
 
                 state = new_state
+                if moveCount == game_env.move_count:
+                    print(action_probs)
+                    print(action_probs.max())
+                    print(torch.argmax(action_probs))
+                    print(actions)
 
             print(f"\tgame result reward: {reward}")
             if reward >= 0:
