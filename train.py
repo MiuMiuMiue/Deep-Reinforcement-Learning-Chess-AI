@@ -153,7 +153,8 @@ for i in range(args.resume_point, 1001):
             student.eval()
             ema_teacher.eval()
             print(f"\tWin!!! Update Teacher Model. {switch} / 10")
-        print(f"\tNot that Good. {switch} / 10")
+        else:
+            print(f"\tNot that Good. {switch} / 10")
     print(f"Finish episodes {i}. Using {(time.time() - start) / 60:.2f} minutes")
 
 print("Finish Training")
