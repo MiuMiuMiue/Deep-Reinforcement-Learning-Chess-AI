@@ -8,6 +8,8 @@ import random
 from env import ChessEnvV1
 import traceback
 
+TESTING = False
+
 def window_partition(x, window_size):
     # This is the Patchify function that can divide the image into smaller patch
     # The output size with default value of reshape_seq is (B, H // window_size, W // window_size, window_size, window_size, C)
@@ -52,9 +54,12 @@ def encodeBoard(x, side, B):
 def decodeOutput(x, y, B, mask):
     assert x.shape == (B, 64 * 8 * 8)
     assert y.shape == (B, 5)
+    global TESTING
 
     sm = nn.Softmax()
     all_actions = torch.cat((x, y), dim=1) * mask
+    if TESTING:
+        print(all_actions)
     
     for i in range(B):
         action_mask = all_actions[i] != 0
@@ -168,6 +173,8 @@ def requires_grad(model, flag=True):
         p.requires_grad = flag
 
 def switchTeacherStudent(student, teacher, device):
+    global TESTING
+    TESTING = True
     game_env = ChessEnvV1(device=device, log=False)
     with torch.no_grad():
         count = 0
