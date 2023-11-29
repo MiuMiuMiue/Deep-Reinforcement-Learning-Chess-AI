@@ -8,8 +8,6 @@ import random
 from env import ChessEnvV1
 import traceback
 
-TESTING = False
-
 def window_partition(x, window_size):
     # This is the Patchify function that can divide the image into smaller patch
     # The output size with default value of reshape_seq is (B, H // window_size, W // window_size, window_size, window_size, C)
@@ -58,8 +56,6 @@ def decodeOutput(x, y, B, mask):
 
     sm = nn.Softmax()
     all_actions = torch.cat((x, y), dim=1) * mask
-    if TESTING:
-        print(all_actions)
     
     for i in range(B):
         action_mask = all_actions[i] != 0
@@ -173,8 +169,6 @@ def requires_grad(model, flag=True):
         p.requires_grad = flag
 
 def switchTeacherStudent(student, teacher, device):
-    global TESTING
-    TESTING = True
     game_env = ChessEnvV1(device=device, log=False)
     with torch.no_grad():
         count = 0
@@ -194,12 +188,7 @@ def switchTeacherStudent(student, teacher, device):
 
                 state = new_state
                 if moveCount == game_env.move_count:
-                    print(action_probs)
-                    print(action_probs[0, torch.tensor(actions)])
-                    print(action_probs.max())
-                    print(torch.argmax(action_probs))
-                    print(actions)
-                    print("==============================================")
+                    pass
 
             print(f"\tgame result reward: {reward}")
             if reward >= 0:

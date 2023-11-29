@@ -38,6 +38,5 @@ from utils import *
 # print(new_state)
 # print(reward)
 sm = nn.Softmax()
-test = torch.tensor([0, 0, torch.nan])
-
-print(torch.argmax(test))
+test = torch.tensor([[0, 0, torch.nan], [0, 1, 2]])
+print(torch.isnan(test).any().item())
