@@ -172,9 +172,10 @@ def switchTeacherStudent(student, teacher, device):
             print("\tgame starts ...")
             side = random.choice((0, 1))
             state = game_env.reset(player_color="WHITE", opponent=teacher) if side == 0 else game_env.reset(player_color="BLACK", opponent=teacher)
-            # print(f"\tside info: {side}")
+            print(f"\tside info: {side}")
             done = False
             while not done:
+                print(game_env.move_count)
                 actions = game_env.possible_actions
 
                 action_probs = student(torch.tensor([state]).to(device), torch.tensor([actions]).to(device), torch.tensor([side]).to(device))
