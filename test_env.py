@@ -38,12 +38,6 @@ from utils import *
 # print(new_state)
 # print(reward)
 sm = nn.Softmax()
-test = torch.tensor([[0.012, 0, 0.004, 0, -0.4], 
-                     [-3, 0, 3.9, 0.4, 0]])
+test = torch.tensor([0, 0, torch.nan])
 
-for i in range(2):
-    mask = test[i] != 0
-    probs = sm(test[i, mask])
-    test[i, mask] = probs
-
-print(test)
+print(torch.argmax(test))
