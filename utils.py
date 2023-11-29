@@ -182,12 +182,8 @@ def switchTeacherStudent(student, teacher, device):
                 actions = game_env.possible_actions
 
                 action_probs = student(torch.tensor([state]).to(device), torch.tensor([actions]).to(device), torch.tensor([side]).to(device))
-                try:
-                    action = torch.argmax(action_probs[0]).item()
-                except:
-                    print(action_probs)
-                    print(action_probs[0].max())
-                    print(action)
+                action = torch.argmax(action_probs[0]).item()
+                print(action)
                 new_state, reward, done, info = game_env.step(action)
 
                 state = new_state
