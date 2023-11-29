@@ -244,11 +244,13 @@ class ChessEnvV1(gym.Env):
 
         # action invalid in current state
         if action not in self.possible_actions:
+            # print("invalidddddddddactionnnnnnnnn")
             reward = INVALID_ACTION_REWARD
             return self.state, reward, self.done, self.info
 
         # Game is done
         if self.done:
+            # print("drawwwwww1")
             return (
                 self.state,
                 0.0,
@@ -256,6 +258,7 @@ class ChessEnvV1(gym.Env):
                 self.info,
             )
         if self.move_count > self.moves_max:
+            # print("drawwwwww2")
             return (
                 self.state,
                 0.0,
@@ -264,7 +267,7 @@ class ChessEnvV1(gym.Env):
             )
 
         # valid action reward
-        reward = INVALID_ACTION_REWARD
+        reward = VALID_ACTION_REWARD
         # make move
         self.state, move_reward, self.done = self.player_move(action)
         reward += move_reward
@@ -276,9 +279,11 @@ class ChessEnvV1(gym.Env):
         if not self.possible_moves and self.king_is_checked(
             state=self.state, player=opponent_player
         ):
+            # print("winnnnnnn1")
             self.done = True
             reward += WIN_REWARD
         elif not self.possible_moves:
+            # print("drawwwwwww3")
             return (
                 self.state,
                 0.0,
@@ -304,9 +309,11 @@ class ChessEnvV1(gym.Env):
             if not self.possible_moves and self.king_is_checked(
                 state=self.state, player=agent_player
             ):
+                # print("losssssssssss1")
                 self.done = True
                 reward += LOSS_REWARD
             elif not self.possible_moves:
+                # print("drawwwwwwwwwww4")
                 return (
                 self.state,
                 0.0,
