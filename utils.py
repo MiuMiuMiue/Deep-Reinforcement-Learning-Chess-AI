@@ -143,7 +143,7 @@ def save_ckpt(policyModel, valueModel, policyOptim, valueOptim, dir, step):
 
 def resume_from_ckpt(policyModel, valueModel, policyOptim, valueOptim, ckptPath):
     assert os.path.isfile(ckptPath), f"could not find model checkpoint at {ckptPath}"
-
+    print("Loading Checkpoints ...")
     checkpoints = torch.load(ckptPath, map_location=lambda storage, loc: storage)
     policy_model = checkpoints["policyModel"]
     value_model = checkpoints["valueModel"]
@@ -154,7 +154,7 @@ def resume_from_ckpt(policyModel, valueModel, policyOptim, valueOptim, ckptPath)
     valueModel.load_state_dict(value_model, strict=True)
     policyOptim.load_state_dict(policy_optim)
     valueOptim.load_state_dict(value_optim)
-
+    print("Finish Loading")
     return policyModel, valueModel, policyOptim, valueOptim
 
 def requires_grad(model, flag=True):
