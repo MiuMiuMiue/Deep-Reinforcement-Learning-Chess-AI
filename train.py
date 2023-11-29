@@ -69,7 +69,7 @@ def PPO_step():
     with torch.no_grad():
         states, actions, log_probs_old, rewards = [], [], [], []
         sides, all_legal_actions = [], []
-        for _ in range(1):
+        for _ in range(5):
             side = random.choice((0, 1))
             # print(f"\t side info: {side}")
             state = env.reset(player_color="WHITE", opponent=ema_teacher) if side == 0 else env.reset(player_color="BLACK", opponent=ema_teacher)
@@ -143,7 +143,7 @@ for i in range(args.resume_point, 1001):
     PPO_step()
     if i % 10 == 0:
         save_ckpt(chessModel, valueModel, policy_optim, value_optim, args.results_dir, i)
-    if i % 1 == 0:
+    if i % 5 == 0:
         print("\tPlaying against teacher")
         switch = switchTeacherStudent(chessModel, ema_teacher, device)
         if switch > 5:
