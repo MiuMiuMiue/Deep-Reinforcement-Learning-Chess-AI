@@ -176,7 +176,7 @@ def switchTeacherStudent(student, teacher, device):
             print("\tgame starts ...")
             side = random.choice((0, 1))
             state = game_env.reset(player_color="WHITE", opponent=teacher) if side == 0 else game_env.reset(player_color="BLACK", opponent=teacher)
-            print(f"\tside info: {side}")
+            # print(f"\tside info: {side}")
             done = False
             while not done:
                 moveCount = game_env.move_count
@@ -191,7 +191,7 @@ def switchTeacherStudent(student, teacher, device):
                     pass
 
             print(f"\tgame result reward: {reward}")
-            if reward >= 0:
+            if reward > 0:
                 count += 1
     
     return count

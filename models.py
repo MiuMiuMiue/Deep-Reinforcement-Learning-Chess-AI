@@ -88,15 +88,9 @@ class betaChessAI(nn.Module):
 
         for block in self.blocks:
             x = block(x, self.pos_embed) # (B, hidden_channel, 8, 8)
-            if torch.isnan(x).any().item():
-                print("here1")
-                raise ValueError
 
         special_actions = self.linear2(rearrange(x, "B C H W -> B (H W C)"))
         x = self.linear1(rearrange(x, "B C H W -> B (H W C)"))
-        if torch.isnan(x).any().item():
-            print("here2")
-            raise ValueError
 
         return decodeOutput(x, special_actions, B, mask).to(self.device) # (B, 8 * 8 * 64 + 5)
 
