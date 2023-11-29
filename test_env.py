@@ -37,7 +37,13 @@ from utils import *
 # print()
 # print(new_state)
 # print(reward)
-sm = nn.Softmax(dim=1)
-test = torch.tensor([[0.012, 0, 0.004, 0.06, -0.4], 
-                     [-3, 5, 3.9, 0.4, 0.1]])
-print(sm(test))
+sm = nn.Softmax()
+test = torch.tensor([[0.012, 0, 0.004, 0, -0.4], 
+                     [-3, 0, 3.9, 0.4, 0]])
+
+for i in range(2):
+    mask = test[i] != 0
+    probs = sm(test[i, mask])
+    test[i, mask] = probs
+
+print(test)

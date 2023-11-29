@@ -53,10 +53,13 @@ def decodeOutput(x, y, B, mask):
     assert x.shape == (B, 64 * 8 * 8)
     assert y.shape == (B, 5)
 
-    sm = nn.Softmax(dim=1)
-
+    sm = nn.Softmax()
     all_actions = torch.cat((x, y), dim=1) * mask
-    all_actions = sm(all_actions)
+    
+    for i in range(B):
+        action_mask = all_actions[i] != 0
+        probs = sm(all_actions[i, action_mask])
+        all_actions[i, action_mask] = probs
 
     return all_actions # (B, 64 * 8 * 8 + 5)
 
@@ -172,10 +175,10 @@ def switchTeacherStudent(student, teacher, device):
             print("\tgame starts ...")
             side = random.choice((0, 1))
             state = game_env.reset(player_color="WHITE", opponent=teacher) if side == 0 else game_env.reset(player_color="BLACK", opponent=teacher)
-            print(f"\tside info: {side}")
+            # print(f"\tside info: {side}")
             done = False
             while not done:
-                print(game_env.move_count)
+                # print(game_env.move_count)
                 actions = game_env.possible_actions
 
                 action_probs = student(torch.tensor([state]).to(device), torch.tensor([actions]).to(device), torch.tensor([side]).to(device))
