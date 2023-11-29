@@ -267,7 +267,8 @@ class ChessEnvV1(gym.Env):
             )
 
         # valid action reward
-        reward = VALID_ACTION_REWARD
+        # reward = VALID_ACTION_REWARD
+        reward = 0
         # make move
         self.state, move_reward, self.done = self.player_move(action)
         reward += move_reward
