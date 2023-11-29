@@ -147,7 +147,7 @@ for i in range(args.resume_point, 1001):
         switch = switchTeacherStudent(chessModel, ema_teacher, device)
         if switch > 5:
             student = deepcopy(chessModel)
-            ema_teacher = update_ema(ema_teacher, chessModel)
+            update_ema(ema_teacher, chessModel)
             requires_grad(ema_teacher, False)
             requires_grad(student, False)
             student.eval()
