@@ -175,7 +175,6 @@ def switchTeacherStudent(student, teacher, device):
             print(f"\tside info: {side}")
             done = False
             while not done:
-                print(game_env.move_count)
                 actions = game_env.possible_actions
 
                 action_probs = student(torch.tensor([state]).to(device), torch.tensor([actions]).to(device), torch.tensor([side]).to(device))
