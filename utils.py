@@ -175,7 +175,7 @@ def switchTeacherStudent(student, teacher, device):
             print("\tgame starts ...")
             side = random.choice((0, 1))
             state = game_env.reset(player_color="WHITE", opponent=teacher) if side == 0 else game_env.reset(player_color="BLACK", opponent=teacher)
-            # print(f"\tside info: {side}")
+            print(f"\tside info: {side}")
             done = False
             while not done:
                 moveCount = game_env.move_count
@@ -188,9 +188,11 @@ def switchTeacherStudent(student, teacher, device):
                 state = new_state
                 if moveCount == game_env.move_count:
                     print(action_probs)
+                    print(action_probs[0, torch.tensor(actions)])
                     print(action_probs.max())
                     print(torch.argmax(action_probs))
                     print(actions)
+                    print("==============================================")
 
             print(f"\tgame result reward: {reward}")
             if reward >= 0:

@@ -145,9 +145,11 @@ for i in range(args.resume_point, 1001):
         save_ckpt(chessModel, valueModel, policy_optim, value_optim, args.results_dir, i)
     if i % 5 == 0:
         print("\tPlaying against teacher")
+        chessModel.eval()
         switch = switchTeacherStudent(chessModel, ema_teacher, device)
+
         if switch > 5:
-            student = deepcopy(chessModel)
+            update_ema(student, chessModel, decay=0)
             update_ema(ema_teacher, chessModel)
             requires_grad(ema_teacher, False)
             requires_grad(student, False)
@@ -156,6 +158,8 @@ for i in range(args.resume_point, 1001):
             print(f"\tWin!!! Update Teacher Model. {switch} / 10")
         else:
             print(f"\tNot that Good. {switch} / 10")
+
+        chessModel.train()
     print(f"Finish episodes {i}. Using {(time.time() - start) / 60:.2f} minutes")
 
 print("Finish Training")
