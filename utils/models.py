@@ -79,7 +79,7 @@ def get_1d_sincos_pos_embed_from_grid(embed_dim, pos):
 def encodeBoard(x, B):
     assert x.shape == (B, 128)
     x = x.reshape((B, 2, 8, 8))
-    boards = np.zeros((B, 12, 8, 8))
+    boards = torch.zeros((B, 12, 8, 8))
     
     for batch in range(B):
         for piece in range(1, 7):
