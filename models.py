@@ -71,6 +71,7 @@ class betaChessAI(nn.Module):
 
         self.linear1 = nn.Linear(in_features=hidden_channel * 64, out_features=64 * 64, bias=True)
         self.linear2 = nn.Linear(in_features=hidden_channel * 64, out_features=5, bias=True)
+        self.softmax = nn.Softmax(dim=1)
 
         self.initialize_weights()
     
@@ -84,7 +85,6 @@ class betaChessAI(nn.Module):
 
         x = encodeBoard(x, side, B).to(self.device) # (B, 13, 8, 8)
         x = self.conv1(x) # (B, hidden_channel, 8, 8)
-        mask = computeMask(actions).to(self.device) # (B, 64 * 64 + 5)
 
         for block in self.blocks:
             x = block(x, self.pos_embed) # (B, hidden_channel, 8, 8)
@@ -92,7 +92,10 @@ class betaChessAI(nn.Module):
         special_actions = self.linear2(rearrange(x, "B C H W -> B (H W C)"))
         x = self.linear1(rearrange(x, "B C H W -> B (H W C)"))
 
-        return decodeOutput(x, special_actions, B, mask).to(self.device) # (B, 8 * 8 * 64 + 5)
+        all_actions = torch.cat((x, special_actions), dim=1)
+
+        return self.softmax(all_actions)
+        # return decodeOutput(x, special_actions, B, mask).to(self.device) # (B, 8 * 8 * 64 + 5)
 
 class valueNet(nn.Module):
     def __init__(self, 

@@ -49,28 +49,25 @@ def encodeBoard(x, side, B):
 
     return torch.tensor(boards).float()
 
-def decodeOutput(x, y, B, mask):
-    assert x.shape == (B, 64 * 8 * 8)
-    assert y.shape == (B, 5)
-    global TESTING
+def decodeOutput(all_actions, actions):
+    mask = computeMask(actions)
 
-    sm = nn.Softmax()
-    all_actions = torch.cat((x, y), dim=1) * mask
+    sm = nn.Softmax(dim=0)
+    all_actions = all_actions[0] * mask
     
-    for i in range(B):
-        action_mask = all_actions[i] != 0
-        probs = sm(all_actions[i, action_mask])
-        all_actions[i, action_mask] = probs
+    action_mask = all_actions != 0
+    probs = sm(all_actions[action_mask])
+    all_actions[action_mask] = probs
 
-    return all_actions # (B, 64 * 8 * 8 + 5)
+    return all_actions # (64 * 8 * 8 + 5)
 
 def computeMask(legal_actions):
-    B, _ = legal_actions.shape
-    legal_actions = legal_actions.cpu().numpy()
-    mask = np.zeros((B, 4101))
+    legal_actions = torch.tensor(legal_actions)
 
-    for i in range(B):
-        mask[i, legal_actions[i][legal_actions[i] != -1]] = 1
+    legal_actions = legal_actions.cpu().numpy()
+    mask = np.zeros((4101,))
+    mask[legal_actions[legal_actions != -1]] = 1
+
     return torch.tensor(mask)
 
 def get_2d_sincos_pos_embed(embed_dim, grid_size, cls_token=False, extra_tokens=0):
@@ -183,7 +180,8 @@ def switchTeacherStudent(student, teacher, device):
                 actions = game_env.possible_actions
 
                 action_probs = student(torch.tensor([state]).to(device), torch.tensor([actions]).to(device), torch.tensor([side]).to(device))
-                action = torch.argmax(action_probs[0]).item()
+                action_probs = decodeOutput(action_probs, actions)
+                action = torch.argmax(action_probs).item()
                 new_state, reward, done, info = game_env.step(action)
 
                 state = new_state

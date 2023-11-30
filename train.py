@@ -77,10 +77,10 @@ def PPO_step():
             while not done:
                 # print(env.move_count)
                 legal_actions = env.possible_actions
+
                 action_probs = student(torch.tensor([state]).to(device), torch.tensor([legal_actions]).to(device), torch.tensor([side]).to(device))
-                action = torch.multinomial(action_probs, 1).item()
-                while action not in legal_actions:
-                    action = torch.multinomial(action_probs, 1).item()
+                action_probs_dist = decodeOutput(action_probs, legal_actions)
+                action = torch.multinomial(action_probs_dist, 1).item()
                 next_state, reward, done, _ = env.step(action)
                 
                 states.append(torch.tensor(state))
