@@ -266,6 +266,7 @@ class ChessEnvV1(gym.Env):
         # action invalid in current state
         if action not in self.possible_actions:
             print("invalid action")
+            raise ValueError
             reward = INVALID_ACTION_REWARD
             return self.state, reward, self.done, self.info
 
