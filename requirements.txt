@@ -1,8 +1,8 @@
 numpy==1.21.2
 numpydoc==1.5.0
-torch==1.11.0
-torchaudio==0.11.0
-torchvision==0.1.6
+torch==1.10.0+cu113
+torchaudio==0.10.0+cu113
+torchvision==0.11.1+cu113
 pygame==2.1.0
 gym==0.26.2
 gym-notices==0.0.6
