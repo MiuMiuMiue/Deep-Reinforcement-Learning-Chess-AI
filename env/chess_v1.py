@@ -318,6 +318,7 @@ class ChessEnvV1(gym.Env):
         # Bot Opponent play
         if self.opponent_policy:
             action_probs = self.opponent_policy(torch.tensor([self.state]).to(self.device), torch.tensor([self.possible_actions]).to(self.device), torch.tensor([0]).to(self.device))
+            print("==================")
             action_probs = decodeOutput(action_probs, self.possible_actions)
             opponent_action = torch.argmax(action_probs).item() ## since it will be my own model
 
