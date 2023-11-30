@@ -13,7 +13,7 @@ import time
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--learning-rate", type=float, default=1e-4)
+parser.add_argument("--learning-rate", type=float, default=1e-3)
 parser.add_argument("--results-dir", type=str, default="results")
 parser.add_argument("--gamma", type=float, default=0.99)
 parser.add_argument("--epochs", type=int, default=10)
@@ -128,18 +128,23 @@ def PPO_step():
             surrogate_obj2 = torch.clamp(ratio, 1-CLIP_EPS, 1+CLIP_EPS) * batch_advantages
             # print(surrogate_obj2)
             policy_loss = -torch.min(surrogate_obj1, surrogate_obj2).mean()
-            print(f"\tpolicy_loss: {policy_loss}")
+            # print(f"\tpolicy_loss: {policy_loss}")
             value_loss = loss(valueModel(batch_states, batch_sides), batch_returns.unsqueeze(-1))
-            print(f"\tvalue_loss: {value_loss}")
+            # print(f"\tvalue_loss: {value_loss}")
+
+            total_loss = policy_loss + 0.5 * value_loss
+            
+            total_loss.backward()
+
             policy_optim.zero_grad()
-            policy_loss.backward(retain_graph=True)
+            # policy_loss.backward(retain_graph=True)
             policy_optim.step()
 
-            for p in chessModel.parameters():
-                print(p.grad)
+            # for p in chessModel.parameters():
+            #     print(p.grad)
 
             value_optim.zero_grad()
-            value_loss.backward()
+            # value_loss.backward()
             value_optim.step()
 
 print("start training ...")

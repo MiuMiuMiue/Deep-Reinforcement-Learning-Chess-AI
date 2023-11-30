@@ -30,8 +30,7 @@ class betaChessBlock(nn.Module):
         self.resBlock = resBlock(hidden_channel=hidden_channel)
         self.attn = Attention(hidden_size, num_heads=num_heads, qkv_bias=True)
 
-        approx_gelu = lambda: nn.GELU(approximate="tanh")
-        self.mlp = Mlp(in_features=hidden_size, hidden_features=hidden_size, act_layer=approx_gelu)
+        self.mlp = Mlp(in_features=hidden_size, hidden_features=hidden_size, act_layer=nn.ReLU)
         self.layerNorm1 = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
         self.layerNorm2 = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
 
@@ -87,17 +86,8 @@ class betaChessAI(nn.Module):
         x = encodeBoard(x, side, B).to(self.device) # (B, 13, 8, 8)
         x = self.conv1(x) # (B, hidden_channel, 8, 8)
 
-        # stack = []
-
         for block in self.blocks:
             x = block(x, self.pos_embed) # (B, hidden_channel, 8, 8)
-        # for i in range(len(self.blocks)):
-        #     if i < 5:
-        #         x = self.blocks[i](x, self.pos_embed) # (B, hidden_channel, 8, 8)
-        #         stack.append(x)
-        #     else:
-        #         z = stack.pop()
-        #         x = z + self.blocks[i](x, self.pos_embed) # (B, hidden_channel, 8, 8)
 
         special_actions = self.linear2(rearrange(x, "B C H W -> B (H W C)"))
         x = self.linear1(rearrange(x, "B C H W -> B (H W C)"))
@@ -127,8 +117,7 @@ class valueNet(nn.Module):
         ])
         self.pos_embed = nn.Parameter(torch.zeros(1, int((input_size / window_size) ** 2), hidden_channel * window_size ** 2), requires_grad=False)
 
-        approx_gelu = lambda: nn.GELU(approximate="tanh")
-        self.mlp = Mlp(in_features=hidden_channel * 64, hidden_features=hidden_channel * 64, out_features=1, act_layer=approx_gelu)
+        self.mlp = Mlp(in_features=hidden_channel * 64, hidden_features=hidden_channel * 64, out_features=1, act_layer=nn.ReLU)
 
         self.initialize_weights()
     
