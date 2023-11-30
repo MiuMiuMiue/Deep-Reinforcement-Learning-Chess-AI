@@ -47,6 +47,7 @@ class betaChessBlock(nn.Module):
         x = x + self.layerNorm2(self.mlp(x))
         
         return self.unpatchify(x, H, W)
+        # return x
 
 
 class betaChessAI(nn.Module):
@@ -86,8 +87,17 @@ class betaChessAI(nn.Module):
         x = encodeBoard(x, side, B).to(self.device) # (B, 13, 8, 8)
         x = self.conv1(x) # (B, hidden_channel, 8, 8)
 
+        # stack = []
+
         for block in self.blocks:
             x = block(x, self.pos_embed) # (B, hidden_channel, 8, 8)
+        # for i in range(len(self.blocks)):
+        #     if i < 5:
+        #         x = self.blocks[i](x, self.pos_embed) # (B, hidden_channel, 8, 8)
+        #         stack.append(x)
+        #     else:
+        #         z = stack.pop()
+        #         x = z + self.blocks[i](x, self.pos_embed) # (B, hidden_channel, 8, 8)
 
         special_actions = self.linear2(rearrange(x, "B C H W -> B (H W C)"))
         x = self.linear1(rearrange(x, "B C H W -> B (H W C)"))

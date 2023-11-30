@@ -36,8 +36,8 @@ env = ChessEnvV1(log=False, device=device)
 
 chessModel = betaChessAI(device=device).to(device)
 valueModel = valueNet(device=device).to(device)
-policy_optim = optim.AdamW(chessModel.parameters(), lr=LR)
-value_optim = optim.AdamW(valueModel.parameters(), lr=LR)
+policy_optim = optim.Adam(chessModel.parameters(), lr=LR)
+value_optim = optim.Adam(valueModel.parameters(), lr=LR)
 
 if args.ckpt:
     chessModel, valueModel, policy_optim, value_optim = resume_from_ckpt(chessModel, valueModel, policy_optim, value_optim, args.ckpt)
@@ -79,6 +79,7 @@ def PPO_step():
                 legal_actions = env.possible_actions
 
                 action_probs = student(torch.tensor([state]).to(device), torch.tensor([legal_actions]).to(device), torch.tensor([side]).to(device))
+                # print(torch.sum(action_probs))
                 action_probs_dist = decodeOutput(action_probs, legal_actions)
                 action = torch.multinomial(action_probs_dist, 1).item()
                 next_state, reward, done, _ = env.step(action)
@@ -98,10 +99,11 @@ def PPO_step():
         values = valueModel(torch.stack(states).to(device), torch.stack(sides).to(device))
         advantages = returns - values.squeeze()
 
+        # advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-10)
+
     valueModel.train()
     for _ in range(EPOCHS):
         for i in range(0, len(states), BATCH_SIZE):
-            # print("===")
             batch_states = torch.stack(states[i:i+BATCH_SIZE]).to(device)
             batch_actions = torch.tensor(actions[i:i+BATCH_SIZE]).to(device)
             batch_log_probs_old = torch.stack(log_probs_old[i:i+BATCH_SIZE]).to(device)
@@ -112,6 +114,7 @@ def PPO_step():
 
             # print(f"batch_states: {batch_states.shape}, batch_legal_actions: {batch_legal_actions.shape}, batch_sides: {batch_sides.shape}")
             new_action_probs = chessModel(batch_states, batch_legal_actions, batch_sides)
+            # print(torch.sum(new_action_probs, dim=1))
             # print(f"new_action_probs: {new_action_probs.shape}")
             new_log_probs = torch.log(new_action_probs.gather(1, batch_actions.unsqueeze(-1))).squeeze(1)
             # print(f"new_log_probs: {new_log_probs.shape}")
@@ -120,17 +123,20 @@ def PPO_step():
             # print(f"ratio: {ratio.shape}")
             # print(f"batch_advantages: {batch_advantages.shape}")
 
-            surrogate_obj1 = ratio * batch_advantages.detach()
+            surrogate_obj1 = ratio * batch_advantages
             # print(surrogate_obj1)
-            surrogate_obj2 = torch.clamp(ratio, 1-CLIP_EPS, 1+CLIP_EPS) * batch_advantages.detach()
+            surrogate_obj2 = torch.clamp(ratio, 1-CLIP_EPS, 1+CLIP_EPS) * batch_advantages
             # print(surrogate_obj2)
             policy_loss = -torch.min(surrogate_obj1, surrogate_obj2).mean()
-            # print(f"\tpolicy_loss: {policy_loss}")
+            print(f"\tpolicy_loss: {policy_loss}")
             value_loss = loss(valueModel(batch_states, batch_sides), batch_returns.unsqueeze(-1))
-            # print(f"\tvalue_loss: {value_loss}")
+            print(f"\tvalue_loss: {value_loss}")
             policy_optim.zero_grad()
-            policy_loss.backward()
+            policy_loss.backward(retain_graph=True)
             policy_optim.step()
+
+            for p in chessModel.parameters():
+                print(p.grad)
 
             value_optim.zero_grad()
             value_loss.backward()

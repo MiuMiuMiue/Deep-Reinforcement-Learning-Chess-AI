@@ -39,4 +39,4 @@ from utils import *
 # print(reward)
 sm = nn.Softmax(dim=0)
 test = torch.tensor([0.0, 0.0, 1.0])
-print(torch.multinomial(test, 1))
+print(test.std())
