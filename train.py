@@ -79,7 +79,6 @@ def PPO_step():
                 legal_actions = env.possible_actions
 
                 action_probs = student(torch.tensor([state]).to(device), torch.tensor([legal_actions]).to(device), torch.tensor([side]).to(device))
-                print("++++++++++++++++")
                 action_probs_dist = decodeOutput(action_probs, legal_actions)
                 action = torch.multinomial(action_probs_dist, 1).item()
                 next_state, reward, done, _ = env.step(action)

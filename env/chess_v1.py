@@ -112,6 +112,7 @@ DEFAULT_BOARD = np.array(
     dtype=np.int8,
 )
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def highlight(string, background="white", color="gray"):
     return utils.colorize(utils.colorize(string, color), background, highlight=True)
@@ -133,7 +134,7 @@ def make_random_policy(np_random, bot_player):
     return random_policy
 
 def decodeOutput(all_actions, actions):
-    mask = computeMask(actions)
+    mask = computeMask(actions).to(device)
 
     sm = nn.Softmax(dim=0)
     all_actions = all_actions[0] * mask
@@ -318,7 +319,6 @@ class ChessEnvV1(gym.Env):
         # Bot Opponent play
         if self.opponent_policy:
             action_probs = self.opponent_policy(torch.tensor([self.state]).to(self.device), torch.tensor([self.possible_actions]).to(self.device), torch.tensor([0]).to(self.device))
-            print("==================")
             action_probs = decodeOutput(action_probs, self.possible_actions)
             opponent_action = torch.argmax(action_probs).item() ## since it will be my own model
 
