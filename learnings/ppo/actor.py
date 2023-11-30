@@ -3,7 +3,7 @@ import torch as T
 import torch.nn as nn
 import torch.nn.functional as F
 
-from utils import build_base_model
+from utils import build_base_model, betaChessAI
 from torch.distributions.categorical import Categorical
 
 class Actor(nn.Module):
@@ -17,7 +17,7 @@ class Actor(nn.Module):
         self.base_model = build_base_model(
             state_dim, hidden_layers, action_dim, nn.Softmax(dim=1)
         )
-        # self.base_model = betaChessAI()
+        self.base_model = betaChessAI()
 
     def forward(self, states: T.Tensor, action_mask: T.Tensor):
         x = self.base_model(states)

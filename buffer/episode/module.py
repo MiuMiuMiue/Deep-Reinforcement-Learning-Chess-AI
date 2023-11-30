@@ -48,7 +48,6 @@ class Episode:
                     - self.values[k]
                 )
                 discount *= gamma * gae_lambda
-        print(list(advantages))
         return list(advantages)
 
     def __len__(self):
