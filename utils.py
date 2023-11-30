@@ -8,6 +8,8 @@ import random
 from env import ChessEnvV1
 import traceback
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 def window_partition(x, window_size):
     # This is the Patchify function that can divide the image into smaller patch
     # The output size with default value of reshape_seq is (B, H // window_size, W // window_size, window_size, window_size, C)
@@ -50,7 +52,7 @@ def encodeBoard(x, side, B):
     return torch.tensor(boards).float()
 
 def decodeOutput(all_actions, actions):
-    mask = computeMask(actions)
+    mask = computeMask(actions).to(device)
 
     sm = nn.Softmax(dim=0)
     all_actions = all_actions[0] * mask
