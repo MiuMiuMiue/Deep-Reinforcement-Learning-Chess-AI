@@ -25,6 +25,7 @@ class DoubleAgentsChess(BaseAgent):
             self.loadCkpt(os.path.join(ckpt_path, f"black_ppo_{start_episode - 1}.pt"), self.black_agent)
             self.loadCkpt(os.path.join(ckpt_path, f"white_ppo_{start_episode - 1}.pt"), self.white_agent)
             print("Finish Loading checkpoints")
+            self.loadEpisodeData(result_folder)
 
     def add_episodes(self, white: Episode, black: Episode) -> None:
         self.white_agent.remember(white)

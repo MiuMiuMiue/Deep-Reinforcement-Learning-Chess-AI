@@ -158,6 +158,14 @@ class BaseAgent(ABC):
         agent.critic.load_state_dict(value_model, strict=True)
         agent.actor_optimizer.load_state_dict(policy_optim)
         agent.critic_optimizer.load_state_dict(value_optim)
+    
+    def loadEpisodeData(self, path):
+        self.moves = np.load(os.path.join(path, "moves.npy"))
+        self.rewards = np.load(os.path.join(path, "rewards.npy"))
+        self.mates_win = np.load(os.path.join(path, "mates_win.npy"))
+        self.mates_lose = np.load(os.path.join(path, "mates_lose.npy"))
+        self.checks_win = np.load(os.path.join(path, "checks_win.npy"))
+        self.checks_lose = np.load(os.path.join(path, "checks_lose.npy"))
 
     @abstractmethod
     def save_learners(self, ep):

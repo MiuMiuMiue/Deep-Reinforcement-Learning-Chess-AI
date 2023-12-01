@@ -21,6 +21,7 @@ class SingleAgentChess(BaseAgent):
         if ckpt_path != "":
             self.loadCkpt(os.path.join(ckpt_path, f"single_agent_{start_episode - 1}.pt"), self.learner)
             print("Finish Loading checkpoints")
+            self.loadEpisodeData(result_folder)
 
     def add_episodes(self, white: Episode, black: Episode) -> None:
         self.learner.remember(white)
