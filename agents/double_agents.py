@@ -26,7 +26,7 @@ class DoubleAgentsChess(BaseAgent):
         self.white_agent.learn()
         self.black_agent.learn()
 
-    def save_learners(self):
-        self.white_agent.save(self.result_folder, "white_ppo")
-        self.black_agent.save(self.result_folder, "black_ppo")
+    def save_learners(self, ep):
+        self.white_agent.save(self.result_folder, "white_ppo", ep)
+        self.black_agent.save(self.result_folder, "black_ppo", ep)
         

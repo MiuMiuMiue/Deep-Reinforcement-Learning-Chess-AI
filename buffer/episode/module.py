@@ -39,14 +39,7 @@ class Episode:
         for t in range(n - 1):
             discount = 1
             for k in range(t, n - 1):
-                advantages[t] += (
-                    discount
-                    * (
-                        self.rewards[k]
-                        + gamma * self.values[k + 1] * (1 - int(self.goals[k]))
-                    )
-                    - self.values[k]
-                )
+                advantages[t] += (discount * ( self.rewards[k] + gamma * self.values[k + 1] * (1 - int(self.goals[k]))) - self.values[k])
                 discount *= gamma * gae_lambda
         return list(advantages)
 

@@ -133,9 +133,9 @@ class BaseAgent(ABC):
             if (ep + 1) % self.train_on == 0:
                 self.learn()
                 if save_on_learn:
-                    self.save()
+                    self.save(ep)
 
-    def save(self):
+    def save(self, ep):
         folder = self.result_folder
         np.save(os.path.join(folder, "moves.npy"), self.moves)
         np.save(os.path.join(folder, "rewards.npy"), self.rewards)
@@ -143,10 +143,10 @@ class BaseAgent(ABC):
         np.save(os.path.join(folder, "mates_lose.npy"), self.mates_lose)
         np.save(os.path.join(folder, "checks_win.npy"), self.checks_win)
         np.save(os.path.join(folder, "checks_lose.npy"), self.checks_lose)
-        self.save_learners()
+        self.save_learners(ep)
 
     @abstractmethod
-    def save_learners(self):
+    def save_learners(self, ep):
         pass
 
     @abstractmethod

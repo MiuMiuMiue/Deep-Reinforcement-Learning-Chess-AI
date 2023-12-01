@@ -106,6 +106,12 @@ class PPO(Learning):
     def remember(self, episode: Episode):
         self.buffer.add(episode)
 
-    def save(self, folder: str, name: str):
-        T.save(self, os.path.join(folder, f"{name}.pt"))
+    def save(self, folder: str, name: str, ep):
+        checkpoint = {
+            "policyModel": self.actor.state_dict(), 
+            "valueModel": self.critic.state_dict(), 
+            "policyOptim": self.actor_optimizer.state_dict(), 
+            "valueOptim": self.critic_optimizer.state_dict()
+        }
+        T.save(checkpoint, os.path.join(folder, "model_ckpts", f"{name}_{ep}.pt"))
         
