@@ -86,19 +86,20 @@ class BaseAgent(ABC):
         white_data: list = None
         black_data: list = None
         render_fn()
+        
+        with T.no_grad():
+            while True:
+                done, white_data = self.take_action(Pieces.WHITE, episode_white)
+                self.update_enemy(black_data, episode_black, white_data[1][Pieces.BLACK])
+                render_fn()
+                if done:
+                    break
 
-        while True:
-            done, white_data = self.take_action(Pieces.WHITE, episode_white)
-            self.update_enemy(black_data, episode_black, white_data[1][Pieces.BLACK])
-            render_fn()
-            if done:
-                break
-
-            done, black_data = self.take_action(Pieces.BLACK, episode_black)
-            self.update_enemy(white_data, episode_white, black_data[1][Pieces.WHITE])
-            render_fn()
-            if done:
-                break
+                done, black_data = self.take_action(Pieces.BLACK, episode_black)
+                self.update_enemy(white_data, episode_white, black_data[1][Pieces.WHITE])
+                render_fn()
+                if done:
+                    break
 
         self.add_episodes(episode_white, episode_black)
         self.rewards[Pieces.BLACK, self.current_ep] = episode_black.total_reward()
