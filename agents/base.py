@@ -20,13 +20,16 @@ class BaseAgent(ABC):
         episodes: int,
         train_on: int,
         result_folder: str,
+        start_episode: int = 0, 
+        ckpt_path: str = ""
     ) -> None:
         super().__init__()
         self.env = env
         self.learner = learner
         self.episodes = episodes
         self.train_on = train_on
-        self.current_ep = 0
+        self.start_ep = start_episode
+        self.current_ep = start_episode
         self.result_folder = result_folder
 
         self.moves = np.zeros((2, episodes), dtype=np.uint32)
@@ -126,7 +129,7 @@ class BaseAgent(ABC):
         }
 
     def train(self, render_each: int, save_on_learn: bool = True):
-        for ep in (pbar := tqdm(range(self.episodes))):
+        for ep in (pbar := tqdm(range(self.start_ep, self.episodes))):
             self.train_episode(ep % render_each == 0 or ep == self.episodes - 1)
             self.current_ep += 1
             pbar.set_postfix(self.tqdm_postfix(ep))
@@ -144,6 +147,17 @@ class BaseAgent(ABC):
         np.save(os.path.join(folder, "checks_win.npy"), self.checks_win)
         np.save(os.path.join(folder, "checks_lose.npy"), self.checks_lose)
         self.save_learners(ep)
+    
+    def loadCkpt(self, path, agent):
+        checkpoints = T.load(path, map_location=lambda storage, loc: storage)
+        policy_model = checkpoints["policyModel"]
+        value_model = checkpoints["valueModel"]
+        policy_optim = checkpoints["policyOptim"]
+        value_optim = checkpoints["valueOptim"]
+        agent.actor.load_state_dict(policy_model, strict=True)
+        agent.critic.load_state_dict(value_model, strict=True)
+        agent.actor_optimizer.load_state_dict(policy_optim)
+        agent.critic_optimizer.load_state_dict(value_optim)
 
     @abstractmethod
     def save_learners(self, ep):

@@ -88,7 +88,7 @@ def encodeBoard(x, B):
         for piece in range(1, 7):
             boards[batch][piece + 5, :, :] = x[batch, 1] == piece
 
-    return torch.tensor(boards).float()
+    return boards.float()
 
 class resBlock(nn.Module):
     def __init__(self, hidden_channel=128):
