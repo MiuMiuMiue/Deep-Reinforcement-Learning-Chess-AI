@@ -11,13 +11,11 @@ class Actor(nn.Module):
         self, state_dim: int, action_dim: int, hidden_layers: tuple[int]
     ) -> None:
         super().__init__()
+        self.device = T.device("cuda:0" if T.cuda.is_available() else "cpu")
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.hidden_layers = hidden_layers
-        self.base_model = build_base_model(
-            state_dim, hidden_layers, action_dim, nn.Softmax(dim=1)
-        )
-        self.base_model = betaChessAI()
+        self.base_model = betaChessAI().to(self.device)
 
     def forward(self, states: T.Tensor, action_mask: T.Tensor):
         x = self.base_model(states)

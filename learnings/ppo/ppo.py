@@ -38,8 +38,8 @@ class PPO(Learning):
         )
 
         self.hidden_layers = hidden_layers
-        self.actor = Actor(self.state_dim, self.action_dim, hidden_layers)
-        self.critic = Critic(self.state_dim, hidden_layers)
+        self.actor = Actor(self.state_dim, self.action_dim, hidden_layers).to(self.device)
+        self.critic = Critic(self.state_dim, hidden_layers).to(self.device)
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=learning_rate)
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=learning_rate)
 
