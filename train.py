@@ -30,7 +30,7 @@ if __name__ == "__main__":
     print("Device:", ppo.device)
 
     if args.agent == "double":
-        print("Start training Double Agents ...")
+        print(f"Start training Double Agents from episode {args.start_episode} ...")
         agent = DoubleAgentsChess(
             env=chess,
             learner=ppo,
@@ -41,7 +41,7 @@ if __name__ == "__main__":
             ckpt_path=args.ckpt,
         )
     else:
-        print("Start training Single Agent ...")
+        print(f"Start training Single Agent from episode {args.start_episode} ...")
         agent = SingleAgentChess(
             env=chess,
             learner=ppo,
