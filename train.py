@@ -8,6 +8,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--ckpt", type=str, default="")
 parser.add_argument("--start-episode", type=int, default=0)
 parser.add_argument("--agent", type=str, default="single")
+parser.add_argument("--episodes", type=int, default=1000)
 
 args = parser.parse_args()
 
@@ -52,5 +53,5 @@ if __name__ == "__main__":
             ckpt_path=args.ckpt,
         )
     agent.train(render_each=20, save_on_learn=True)
-    agent.save()
+    agent.save(args.episodes)
     chess.close()
