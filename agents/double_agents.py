@@ -3,6 +3,7 @@ from chess import Chess
 from .base import BaseAgent
 from buffer.episode import Episode
 from learnings.base import Learning
+import chess.info_keys as InfoKeys
 import os
 
 
@@ -26,6 +27,27 @@ class DoubleAgentsChess(BaseAgent):
             self.loadCkpt(os.path.join(ckpt_path, f"white_ppo_{start_episode - 1}.pt"), self.white_agent)
             print("Finish Loading checkpoints")
             self.loadEpisodeData(result_folder)
+    
+    def take_action(self, turn: int, episode: Episode):
+        mask = self.env.get_all_actions(turn)[-1]
+        state = self.env.get_state(turn)
+
+        # black = 0, white = 1
+        if turn == 0:
+            print("black")
+            action, prob, value = self.black_agent.take_action(state, mask)
+        else:
+            print("white")
+            action, prob, value = self.white_agent.take_action(state, mask)
+
+        rewards, done, infos = self.env.step(action)
+        self.moves[turn, self.current_ep] += 1
+
+        self.update_stats(infos)
+        goal = InfoKeys.CHECK_MATE_WIN in infos[turn]
+        episode.add(state, rewards[turn], action, goal, prob, value, mask)
+
+        return done, [state, rewards, action, goal, prob, value, mask]
 
     def add_episodes(self, white: Episode, black: Episode) -> None:
         self.white_agent.remember(white)
