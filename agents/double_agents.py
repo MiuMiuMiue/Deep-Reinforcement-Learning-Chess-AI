@@ -34,10 +34,8 @@ class DoubleAgentsChess(BaseAgent):
 
         # black = 0, white = 1
         if turn == 0:
-            print("black")
             action, prob, value = self.black_agent.take_action(state, mask)
         else:
-            print("white")
             action, prob, value = self.white_agent.take_action(state, mask)
 
         rewards, done, infos = self.env.step(action)
