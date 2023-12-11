@@ -14,6 +14,14 @@ from utils import save_to_video
 import argparse
 from agents import SingleAgentChess, DoubleAgentsChess
 
+parser = argparse.ArgumentParser()
+
+parser.add_argument("--white-ckpt", type=str, default="results\\DoubleAgents\\model_ckpts\\white_ppo_543.pt")
+parser.add_argument("--black-ckpt", type=str, default="results\\DoubleAgents\\model_ckpts\\black_ppo_1000.pt")
+
+args = parser.parse_args()
+
+
 def loadCkpt(path, agent):
     checkpoints = T.load(path, map_location=lambda storage, loc: storage)
     policy_model = checkpoints["policyModel"]
@@ -34,7 +42,8 @@ whiteAgent = PPO(
         batch_size=64
     )
 
-loadCkpt("results\\DoubleAgents\\model_ckpts\\white_ppo_1000.pt", whiteAgent)
+loadCkpt(args.white_ckpt, whiteAgent)
+# loadCkpt("results\\DoubleAgents\\model_ckpts\\white_ppo_1000.pt", whiteAgent)
 
 blackAgent = PPO(
         environment=env,
@@ -44,7 +53,8 @@ blackAgent = PPO(
         batch_size=64
     )
 
-loadCkpt("results\\DoubleAgents\\model_ckpts\\black_ppo_543.pt", blackAgent)
+loadCkpt(args.black_ckpt, blackAgent)
+# loadCkpt("results\\DoubleAgents\\model_ckpts\\black_ppo_543.pt", blackAgent)
 
 def take_action(turn: int):
     mask = env.get_all_actions(turn)[-1]
