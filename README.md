@@ -28,6 +28,8 @@ To train double agents, use the following cmd:
 
 Other parameters, such as resume training from checkpoints, are also provided. Details are in the train.py.
 
+Directory `model_ckpts` and `renders` need to be created manually in order to save the checkpoints and demo videos in both directories `results/DoubleAgents` and `results/SingleAgent`.
+
 # Evaluating the Models
 `python playGames.py white-ckpt () black-ckpt ()`
 
@@ -39,7 +41,7 @@ white-ckpt and black-ckpt are needed to indicate which models to use for each si
 This will generate Learning Curves for both Single Agent Training and Double Agent Training according to existing data in the .npy files.
 
 # Checkpoints
-There are checkpoints for each model mentioned in Reports saved in the path `Results/SingleAgent/model_ckpt` and `Results/DoubleAgents/model_ckpt`
+The checkpoints for the models that mentioned in the report can be downloaded here: https://drive.google.com/drive/folders/11IsrpM9x2eYo3CxUvz2K9xNAys7-OPrm?usp=sharing
 
 # Refrences
 - https://doi.org/10.5281/zenodo.7789509
